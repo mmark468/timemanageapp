@@ -1,0 +1,42 @@
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 28rpx 0 22rpx;
+  padding: 30rpx;
+}
+
+.summary-title {
+  margin-top: 8rpx;
+  font-size: 42rpx;
+  font-weight: 900;
+}
+
+.small {
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.subject {
+  width: 100%;
+  margin-bottom: 18rpx;
+  padding: 28rpx;
+  text-align: left;
+}
+
+.subject-head,
+.subject-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subject-title {
+  margin-top: 8rpx;
+  font-size: 36rpx;
+  font-weight: 900;
+}
+
+.progress-track {
+  margin: 24rpx 0 16rpx;
+}

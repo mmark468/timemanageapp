@@ -1,0 +1,17 @@
+node_modules
+dist
+.local-node
+.local-npm
+.idea
+.DS_Store
+.env
+.env.local
+npm-debug.log*
+
+# Local CAIE paper cache; keep in the working folder, do not commit.
+content/cambridge-past-papers/raw/
+content/cambridge-past-papers/page-images/
+content/cambridge-past-papers/*.sqlite3
+
+# Keep the time-planning project separate from the travel website assets.
+src/assets/design/wuhan-2-5d-travel-map-liquid-glass.png

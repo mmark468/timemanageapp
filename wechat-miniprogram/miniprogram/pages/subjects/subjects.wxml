@@ -1,0 +1,31 @@
+<view class="page">
+  <view class="eyebrow">科目进度</view>
+  <view class="title">备考科目</view>
+
+  <view class="summary card">
+    <view>
+      <view class="muted small">待复盘错题</view>
+      <view class="summary-title">{{mistakeCount}} 条</view>
+    </view>
+    <view class="pill dark">错题本</view>
+  </view>
+
+  <block wx:for="{{subjects}}" wx:key="id">
+    <button class="subject card" bindtap="openSubject" data-id="{{item.id}}">
+      <view class="subject-head">
+        <view>
+          <view class="muted small">{{item.board}} · {{item.code}}</view>
+          <view class="subject-title">{{item.name}}</view>
+        </view>
+        <view class="pill">{{item.examDaysLeft}} 天</view>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{item.progress}}%;"></view>
+      </view>
+      <view class="subject-foot muted small">
+        <text>{{item.examTitle}}</text>
+        <text>{{item.progress}}%</text>
+      </view>
+    </button>
+  </block>
+</view>

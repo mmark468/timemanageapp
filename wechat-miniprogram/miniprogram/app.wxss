@@ -1,0 +1,122 @@
+page {
+  min-height: 100vh;
+  background: #eef2f7;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+view,
+text,
+button,
+input,
+textarea {
+  box-sizing: border-box;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 1;
+}
+
+button::after {
+  border: 0;
+}
+
+.page {
+  padding: 40rpx 32rpx 160rpx;
+}
+
+.eyebrow {
+  color: #6b7280;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.title {
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 52rpx;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 34rpx 4rpx 18rpx;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.card {
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 14rpx 34rpx rgba(15, 23, 42, 0.08);
+}
+
+.soft-card {
+  border-radius: 26rpx;
+  background: #f6f8fb;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.between {
+  justify-content: space-between;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: #f6f8fb;
+  color: #111827;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.pill.dark {
+  background: #111827;
+  color: #ffffff;
+}
+
+.pill.selected {
+  background: #ffffff;
+  box-shadow: 0 8rpx 18rpx rgba(15, 23, 42, 0.08);
+}
+
+.progress-track {
+  height: 16rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+  background: #eef2f7;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: #111827;
+}
+
+.empty {
+  padding: 56rpx 28rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  color: #6b7280;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 700;
+}

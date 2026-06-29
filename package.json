@@ -1,0 +1,36 @@
+{
+  "name": "time-planning",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "node scripts/build-preview.mjs",
+    "build:vite": "tsc && vite build",
+    "export:html": "npm run build && node scripts/export-single-html.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "cie:math:fetch-official": "node scripts/cie-math/fetchOfficial9709.mjs",
+    "cie:math:build-manifest": "node scripts/cie-math/buildLocalManifest.mjs",
+    "caie:init-db": "python3 -m backend.caie_papers.cli init-db",
+    "caie:fetch-official": "python3 -m backend.caie_papers.cli fetch-official",
+    "caie:download-pending": "python3 -m backend.caie_papers.cli download-pending",
+    "caie:index-pdfs": "python3 -m backend.caie_papers.cli index-pdfs",
+    "caie:search": "python3 -m backend.caie_papers.cli search",
+    "caie:serve": "python3 -m backend.caie_papers.cli serve"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.21",
+    "lucide-react": "^0.468.0",
+    "postcss": "^8.5.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3"
+  }
+}
