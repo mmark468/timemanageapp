@@ -65,6 +65,8 @@ npm run dev
 ## 项目结构
 
 ```text
+docs/
+  module-design.md      # 前端 UI / 搜题程序 / 后端 database 的模块边界
 src/
   App.tsx               # 应用状态、页面切换和核心交互
   components/           # 通用 UI 组件
@@ -72,7 +74,12 @@ src/
   pages/                # 各产品页面
   types.ts              # 数据结构类型
   utils/                # localStorage 与日期工具
+backend/
+  caie_papers/          # CAIE past-paper 采集、索引、SQLite/FTS 搜索和本地 HTTP API
+wechat-miniprogram/     # 原生微信小程序版
 ```
+
+更完整的模块边界见 [`docs/module-design.md`](docs/module-design.md)：里面把项目拆成前端 UI、中间搜题程序、后端 database 三层。
 
 ## 已实现的 MVP 交互
 
@@ -93,4 +100,4 @@ src/
 
 ## MVP 边界
 
-首版没有登录、云同步、支付、AI 计划、真实考试数据库、通知推送或后端服务。所有数据都保存在浏览器本地，便于后续替换成真实 API。
+首版 Web App 默认没有登录、云同步、支付、AI 计划或通知推送。用户学习计划数据仍保存在浏览器本地；仓库中已经包含 CAIE past-paper 后端原型，便于后续把搜题页从本地 mock 题库替换成真实 API。
