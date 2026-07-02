@@ -72,11 +72,11 @@ const html = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F6F8FB" />
     <title>时间规划</title>
-    <link rel="stylesheet" href="/assets/time-planning-preview.css" />
+    <link rel="stylesheet" href="./assets/time-planning-preview.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script src="/assets/time-planning-preview.js"></script>
+    <script src="./assets/time-planning-preview.js"></script>
   </body>
 </html>
 `;
