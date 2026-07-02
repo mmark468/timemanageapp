@@ -25,6 +25,7 @@
 
 - 之后更新网站时，需要重新运行本地 `npm run build` 并把 `dist/` 推送到 `gh-pages` 分支。
 - GitHub Pages 可能有短缓存；手机端若看到旧页面，可等待几分钟或刷新。
+- GitHub Pages API 仍可能显示早先 legacy build 的 `errored` 状态，但最终验证中首页、CSS、JS 都已返回 200。
 
 ### 建议 commit message
 
