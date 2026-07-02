@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-07-02 - GitHub Pages 已启用
+
+### 本次修改内容
+
+- 按用户确认，将 GitHub 仓库 `mmark468/timemanageapp` 从 private 改为 public。
+- 启用 GitHub Pages，并配置为从远程 `gh-pages` 分支根目录发布。
+- 网站地址为 `https://mmark468.github.io/timemanageapp/`，首次启用后 GitHub Pages 会先进入 building 状态。
+
+### 修改文件
+
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：无影响。
+- 数据结构：无影响。
+- 接口：无影响。
+- 依赖：无影响。
+- 仓库设置：仓库已公开，GitHub Pages 已启用。
+
+### 潜在风险
+
+- 仓库公开后，代码内容可以被互联网访问；本项目 `.gitignore` 已排除本地 CAIE PDF cache 和 SQLite 数据库，但源码和已提交文档是公开的。
+- GitHub Pages 首次发布需要等待构建完成，刚启用时手机访问可能短暂显示 404。
+
+### 建议 commit message
+
+```text
+docs: record GitHub Pages activation
+```
+
 ## 2026-07-02 - GitHub Pages 发布准备
 
 ### 本次修改内容
