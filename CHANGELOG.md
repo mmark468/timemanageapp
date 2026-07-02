@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## 2026-07-02 - 最终采用 gh-pages 分支发布
+
+### 本次修改内容
+
+- 删除 `.github/workflows/deploy-pages.yml`，避免后续 push 时触发卡住的 Actions Pages 部署。
+- 将 GitHub Pages 保持为从远程 `gh-pages` 分支根目录发布。
+- 验证 `https://mmark468.github.io/timemanageapp/` 首页、CSS、JS 均返回 200。
+
+### 修改文件
+
+- `.github/workflows/deploy-pages.yml`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：无影响。
+- 数据结构：无影响。
+- 接口：无影响。
+- 依赖：无影响。
+- 部署：最终发布源为 `gh-pages` 分支，不再依赖 GitHub Actions workflow。
+
+### 潜在风险
+
+- 之后更新网站时，需要重新运行本地 `npm run build` 并把 `dist/` 推送到 `gh-pages` 分支。
+- GitHub Pages 可能有短缓存；手机端若看到旧页面，可等待几分钟或刷新。
+
+### 建议 commit message
+
+```text
+ci: use gh-pages branch for site publishing
+```
+
 ## 2026-07-02 - 改用 GitHub Actions 发布 Pages
 
 ### 本次修改内容
