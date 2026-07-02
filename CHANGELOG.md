@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-07-02 - 改用 GitHub Actions 发布 Pages
+
+### 本次修改内容
+
+- 新增 `.github/workflows/deploy-pages.yml`，用 GitHub Actions 自动安装依赖、运行 `npm run build`，并把 `dist/` 发布到 GitHub Pages。
+- 保留已有 `gh-pages` 静态发布分支作为备用，但后续优先用 Actions 部署。
+
+### 修改文件
+
+- `.github/workflows/deploy-pages.yml`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：无影响。
+- 数据结构：无影响。
+- 接口：无影响。
+- 依赖：无影响。
+- 部署：新增 GitHub Actions 发布流程，会在备份分支 push 后自动构建网站。
+
+### 潜在风险
+
+- GitHub Actions 首次运行需要等待队列和构建完成，期间网站可能短暂 404。
+- Actions 使用 `npm ci`，如果 npm registry 或 GitHub Actions 网络波动，部署可能需要重新运行。
+
+### 建议 commit message
+
+```text
+ci: deploy app with GitHub Pages workflow
+```
+
 ## 2026-07-02 - GitHub Pages 已启用
 
 ### 本次修改内容
