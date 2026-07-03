@@ -254,6 +254,22 @@ function getActiveTab(route: Route): MainTab {
   return "today";
 }
 
+interface DesktopLayoutContext {
+  activeTab: MainTab;
+  routeName: Route["name"];
+  visualStyle: VisualStyle;
+  desktopSlot: "responsive-shell";
+}
+
+function getDesktopLayoutContext(route: Route, visualStyle: VisualStyle): DesktopLayoutContext {
+  return {
+    activeTab: getActiveTab(route),
+    routeName: route.name,
+    visualStyle,
+    desktopSlot: "responsive-shell",
+  };
+}
+
 export default function App() {
   const storedProfile = readStorage<StudentProfile | null>("finished.profile", null);
   const hasOnboarded = readStorage("finished.onboarded", false);
@@ -1326,15 +1342,21 @@ export default function App() {
 
   const showBottomNav =
     route.name !== "welcome" && route.name !== "onboarding" && route.name !== "setupTimetable" && route.name !== "focus";
+  const desktopLayoutContext = getDesktopLayoutContext(route, visualStyle);
 
   return (
-    <div className={`theme-${visualStyle} min-h-screen px-0 sm:px-6 sm:py-5`}>
-      <div className="app-phone-frame relative mx-auto min-h-screen w-full max-w-[390px] border-x border-white/70 bg-cream shadow-[0_22px_70px_rgba(15,23,42,0.14)] sm:rounded-[34px]">
-        <div key={JSON.stringify(route)} className="page-enter min-h-screen">
+    <div className={`desktop-shell theme-${visualStyle} min-h-screen px-0 sm:px-6 sm:py-5 lg:px-6 lg:py-6`}>
+      <div
+        className="app-phone-frame app-responsive-frame relative mx-auto min-h-screen w-full max-w-[390px] border-x border-white/70 bg-cream shadow-[0_22px_70px_rgba(15,23,42,0.14)] sm:rounded-[34px] lg:mx-0 lg:ml-[112px] lg:min-h-[calc(100vh-48px)] lg:w-[calc(100vw-160px)] lg:max-w-[1320px] lg:rounded-[34px] lg:border"
+        data-desktop-route={desktopLayoutContext.routeName}
+        data-desktop-slot={desktopLayoutContext.desktopSlot}
+        data-desktop-theme={desktopLayoutContext.visualStyle}
+      >
+        <div key={JSON.stringify(route)} className="page-enter min-h-screen lg:min-h-[calc(100vh-48px)]">
           {renderPage()}
         </div>
 
-        {showBottomNav ? <BottomNav activeTab={getActiveTab(route)} onTabChange={goToTab} /> : null}
+        {showBottomNav ? <BottomNav activeTab={desktopLayoutContext.activeTab} onTabChange={goToTab} /> : null}
 
         {toast ? (
           <div className="fixed left-1/2 top-5 z-40 w-[calc(100%_-_40px)] max-w-[360px] -translate-x-1/2 rounded-full bg-ink px-4 py-3 text-center text-sm font-black text-white shadow-soft">

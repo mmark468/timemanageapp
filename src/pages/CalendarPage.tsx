@@ -388,6 +388,7 @@ export function CalendarPage({
 
   return (
     <main className="calendar-page bg-cream px-4 pb-32 pt-6 text-ink">
+      <div className="calendar-desktop-grid">
       <section className="calendar-overview-card mb-4 rounded-[32px] p-5 shadow-soft">
         <div className="mb-7 flex items-start justify-between gap-3">
           <div>
@@ -422,7 +423,7 @@ export function CalendarPage({
         </div>
       </section>
 
-      <div className="mb-3 flex items-center justify-between gap-3 px-1">
+      <div className="calendar-month-header mb-3 flex items-center justify-between gap-3 px-1">
         <div>
           <p className="text-xs font-black text-muted">每日计划</p>
           <h2 className="text-3xl font-black tracking-normal text-ink">
@@ -630,6 +631,7 @@ export function CalendarPage({
           <div className="border-t border-black/5 py-5 text-center text-sm font-bold text-muted">当天暂无事项</div>
         )}
       </section>
+      </div>
 
       <button
         type="button"

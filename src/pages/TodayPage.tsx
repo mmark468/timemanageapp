@@ -151,7 +151,7 @@ export function TodayPage({
         </button>
       </header>
 
-      <section className="mb-4 grid grid-cols-3 gap-2">
+      <section className="today-quick-stats mb-4 grid grid-cols-3 gap-2">
         <QuickStat
           icon={<ListChecks size={15} />}
           label="今日任务"
@@ -161,7 +161,7 @@ export function TodayPage({
         <QuickStat icon={<CalendarDays size={15} />} label="专注" value={minutesToText(focusMinutes)} />
       </section>
 
-      <section className="mb-4 grid grid-cols-[1fr_auto] items-center gap-3 rounded-[26px] border border-white/80 bg-white p-4 shadow-soft">
+      <section className="today-search-card mb-4 grid grid-cols-[1fr_auto] items-center gap-3 rounded-[26px] border border-white/80 bg-white p-4 shadow-soft">
         <div>
           <p className="text-sm font-black text-ink">A-Level 搜题</p>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">按科目、Paper 和知识点查本地题库</p>
@@ -177,7 +177,7 @@ export function TodayPage({
       </section>
 
       {examSubject ? (
-        <section className="rounded-[30px] border border-[#F7CACA] bg-white p-4 shadow-soft">
+        <section className="today-exam-card rounded-[30px] border border-[#F7CACA] bg-white p-4 shadow-soft">
           <div className="mb-3 flex items-center justify-between">
             <span className="rounded-full bg-[#D94747] px-3 py-1.5 text-xs font-black text-white">大考倒计时</span>
             <div className="flex gap-2">
@@ -226,7 +226,7 @@ export function TodayPage({
         </section>
       ) : null}
 
-      <section className="mt-5 rounded-[28px] border border-white/80 bg-white p-4 shadow-soft">
+      <section className="today-schedule-card mt-5 rounded-[28px] border border-white/80 bg-white p-4 shadow-soft">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-black text-ink">今日安排</p>
@@ -340,7 +340,7 @@ export function TodayPage({
         </div>
       </section>
 
-      <section className="mt-5 rounded-[28px] bg-white p-4 shadow-soft">
+      <section className="today-focus-card mt-5 rounded-[28px] bg-white p-4 shadow-soft">
         <HomePomodoro
           target={focusTarget}
           focusMinutes={focusMinutes}

@@ -168,7 +168,7 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
   };
 
   return (
-    <main className="px-5 pb-28 pt-7">
+    <main className="timetable-page px-5 pb-28 pt-7">
       <PageHeader
         title="我的课表"
         subtitle="按一周几次来改课表，保存后会自动进日历。"

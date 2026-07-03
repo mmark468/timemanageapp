@@ -490,4 +490,255 @@ body.theme-dark {
     right: 22px;
   }
 }
+
+@media (min-width: 1024px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .desktop-shell {
+    background:
+      linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(239, 244, 247, 0.9) 100%),
+      var(--app-bg);
+  }
+
+  .desktop-shell.theme-dark {
+    background:
+      linear-gradient(180deg, rgba(32, 27, 23, 0.88) 0%, rgba(24, 21, 18, 0.96) 100%),
+      var(--app-bg);
+  }
+
+  .app-responsive-frame {
+    max-width: 1320px !important;
+    overflow: hidden;
+  }
+
+  .app-responsive-frame > .page-enter,
+  .app-responsive-frame main {
+    min-height: calc(100vh - 48px);
+  }
+
+  .app-responsive-frame main {
+    width: 100%;
+    max-width: none;
+  }
+
+  .desktop-shell nav {
+    top: 24px !important;
+    right: auto !important;
+    bottom: 24px !important;
+    left: 24px !important;
+    width: 88px !important;
+    max-width: none !important;
+    transform: none !important;
+    border-radius: 32px !important;
+    padding: 8px !important;
+  }
+
+  .desktop-shell nav > div {
+    display: grid;
+    height: 100%;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    border-radius: 26px !important;
+    padding: 6px !important;
+  }
+
+  .desktop-shell nav button {
+    height: auto !important;
+    min-height: 72px;
+    border-radius: 22px !important;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .desktop-shell nav button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .app-responsive-frame[data-desktop-route="today"] .today-page,
+  .app-responsive-frame[data-desktop-route="calendar"] .calendar-page,
+  .app-responsive-frame[data-desktop-route="subjects"] .subjects-page,
+  .app-responsive-frame[data-desktop-route="timetable"] .timetable-page,
+  .app-responsive-frame[data-desktop-route="questionSearch"] .question-search-page,
+  .app-responsive-frame[data-desktop-route="settings"] .settings-page {
+    padding: 28px !important;
+    padding-bottom: 32px !important;
+  }
+
+  .today-page {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
+    gap: 16px;
+    align-content: start;
+  }
+
+  .today-page > header,
+  .today-quick-stats {
+    grid-column: 1 / -1;
+    margin-bottom: 0 !important;
+  }
+
+  .today-search-card,
+  .today-exam-card,
+  .today-focus-card {
+    grid-column: 1;
+    margin: 0 !important;
+  }
+
+  .today-schedule-card {
+    grid-column: 2;
+    grid-row: 3 / span 4;
+    align-self: start;
+    margin: 0 !important;
+  }
+
+  .today-schedule-card .space-y-3 {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .question-search-page {
+    display: grid;
+    grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+    gap: 16px;
+    align-content: start;
+    align-items: start;
+  }
+
+  .question-search-page > header {
+    grid-column: 1 / -1;
+    margin-bottom: 0 !important;
+  }
+
+  .question-search-page > :nth-child(2),
+  .question-search-page > :nth-child(3) {
+    grid-column: 1;
+  }
+
+  .question-search-page > :nth-child(n + 4) {
+    grid-column: 2;
+  }
+
+  .question-search-page > section,
+  .question-search-page > div,
+  .question-search-page > p {
+    margin-top: 0 !important;
+  }
+
+  .subjects-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .subjects-grid > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0 !important;
+  }
+
+  .timetable-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    align-content: start;
+  }
+
+  .calendar-desktop-grid {
+    display: grid;
+    grid-template-columns: clamp(320px, 30vw, 390px) minmax(0, 1fr);
+    grid-template-areas:
+      "overview gantt"
+      "month gantt"
+      "detail gantt";
+    gap: 16px;
+    align-items: start;
+  }
+
+  .calendar-overview-card {
+    grid-area: overview;
+    min-height: 190px;
+    margin-bottom: 0 !important;
+  }
+
+  .calendar-month-header {
+    grid-area: month;
+    margin-bottom: 0 !important;
+    border-radius: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 14px !important;
+    box-shadow: var(--pill-shadow);
+  }
+
+  .calendar-gantt-card {
+    grid-area: gantt;
+    max-height: calc(100vh - 104px);
+    min-height: calc(100vh - 104px);
+    overflow: auto !important;
+    border-radius: 30px !important;
+  }
+
+  .calendar-detail-card {
+    grid-area: detail;
+    max-height: calc(100vh - 430px);
+    min-height: 180px;
+    overflow: auto !important;
+    margin-top: 0 !important;
+  }
+
+  .calendar-date-strip {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .calendar-date-pill {
+    min-width: 66px !important;
+  }
+
+  .calendar-time-grid {
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+  }
+
+  .calendar-time-column {
+    width: 64px !important;
+  }
+
+  .calendar-current-time-line span:first-child {
+    left: -64px !important;
+  }
+
+  .calendar-event-block {
+    left: 16px !important;
+    right: 16px !important;
+  }
+
+  .calendar-add-fab {
+    right: 32px;
+    bottom: 32px;
+    left: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .today-page {
+    grid-template-columns: minmax(300px, 0.8fr) minmax(420px, 1.25fr) minmax(280px, 0.9fr);
+  }
+
+  .today-search-card,
+  .today-exam-card {
+    grid-column: 1;
+  }
+
+  .today-schedule-card {
+    grid-column: 2;
+  }
+
+  .today-focus-card {
+    grid-column: 3;
+    grid-row: 3 / span 2;
+  }
+}
 /* preview-custom-end */

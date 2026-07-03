@@ -1,5 +1,47 @@
 # CHANGELOG
 
+## 2026-07-03 - 新增电脑端响应式预览分支
+
+### 本次修改内容
+
+- 新增桌面响应式应用外壳，电脑端从手机窄框扩展为最高 1320px 的宽屏工作台。
+- 底部导航在电脑端改为左侧固定导航栏，手机端仍保留底部导航。
+- 首页在电脑端改成横向卡片布局，今日安排、搜题入口、考试倒计时和番茄钟分区展示。
+- 日历在电脑端改成左侧概览/月份/详情、右侧完整时间轴的等比例布局，避免时间轴被挤压。
+- 搜题页在电脑端改成左侧科目/模式、右侧题库与图片搜题内容的分栏布局。
+- 科目页在电脑端改为卡片网格，课表页预留桌面布局 class。
+- 在 `App.tsx` 新增 `DesktopLayoutContext` 和 `data-desktop-route`/`data-desktop-slot` 接口，方便后续接入单独设计的电脑端页面。
+- 已运行 `npm run build:vite` 和 `npm run build`，构建成功。
+
+### 修改文件
+
+- `src/App.tsx`
+- `src/pages/CalendarPage.tsx`
+- `src/pages/SubjectsPage.tsx`
+- `src/pages/TimetablePage.tsx`
+- `src/pages/TodayPage.tsx`
+- `src/styles.css`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：有影响。主要影响电脑端布局；移动端继续使用原来的手机宽度和底部导航。
+- 数据结构：无影响，未新增或修改 localStorage key。
+- 接口：有轻微影响。新增桌面布局上下文和 `data-*` 布局接口，但未修改现有页面 props 或后端接口。
+- 依赖：无影响，未修改 npm 依赖。
+
+### 潜在风险
+
+- 本次是桌面预览版本，宽屏布局主要通过响应式 CSS 完成，后续单独设计电脑端页面时仍建议逐页细化。
+- 内置浏览器实例当前不可用，无法完成自动截图检查；已通过 TypeScript 和生产构建验证。
+- 搜题页电脑端分栏依赖当前页面子元素顺序，后续如果大改搜题页结构，需要同步调整桌面 CSS。
+
+### 建议 commit message
+
+```text
+feat: add desktop responsive preview shell
+```
+
 ## 2026-07-03 - 简化数学题库月份选择按钮
 
 ### 本次修改内容

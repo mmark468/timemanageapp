@@ -23,7 +23,7 @@ export function SubjectsPage({ subjects, sessions, onOpenSubject, onAddSubject }
   };
 
   return (
-    <main className="px-5 pb-28 pt-7">
+    <main className="subjects-page px-5 pb-28 pt-7">
       <PageHeader title="我的科目" subtitle="点进科目后调整单元学习和刷题进度。" />
 
       <section className="mb-4 rounded-[24px] bg-white p-3 shadow-soft">
@@ -45,7 +45,7 @@ export function SubjectsPage({ subjects, sessions, onOpenSubject, onAddSubject }
         </div>
       </section>
 
-      <div className="space-y-3">
+      <div className="subjects-grid space-y-3">
         {subjects.map((subject) => {
           const todayMinutes = sessions
             .filter((session) => session.subjectId === subject.id && session.completedAt.startsWith(TODAY))
