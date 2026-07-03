@@ -747,6 +747,10 @@ video {
 .w-\[calc\(100\%_-_40px\)\] {
   width: calc(100% - 40px);
 }
+.w-fit {
+  width: -moz-fit-content;
+  width: fit-content;
+}
 .w-full {
   width: 100%;
 }
@@ -755,6 +759,9 @@ video {
 }
 .min-w-16 {
   min-width: 4rem;
+}
+.min-w-\[142px\] {
+  min-width: 142px;
 }
 .min-w-\[58px\] {
   min-width: 58px;
@@ -1700,8 +1707,14 @@ button:disabled {
 .focus\:ring-ink\/10:focus {
   --tw-ring-color: rgb(17 24 39 / 0.1);
 }
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
+}
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
+}
+.disabled\:opacity-60:disabled {
+  opacity: 0.6;
 }
 @media (min-width: 640px) {
 
