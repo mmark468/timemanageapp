@@ -8,12 +8,12 @@ interface ChipProps {
 }
 
 const selectedColor = {
-  blue: "bg-sky text-ink shadow-pill",
-  yellow: "bg-lemon text-ink shadow-pill",
-  pink: "bg-peach text-ink shadow-pill",
-  green: "bg-mint text-ink shadow-pill",
-  purple: "bg-lavender text-ink shadow-pill",
-  white: "bg-white text-ink shadow-soft",
+  blue: "bg-[#1E3A8A] text-white shadow-pill",
+  yellow: "bg-[#854D0E] text-white shadow-pill",
+  pink: "bg-[#9F1239] text-white shadow-pill",
+  green: "bg-[#14532D] text-white shadow-pill",
+  purple: "bg-[#5B21B6] text-white shadow-pill",
+  white: "bg-ink text-white shadow-pill",
 };
 
 export function Chip({ children, selected = false, color = "blue", onClick }: ChipProps) {

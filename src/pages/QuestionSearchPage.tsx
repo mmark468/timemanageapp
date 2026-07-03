@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock3,
-  Database,
   Download,
   ExternalLink,
   FileText,
@@ -20,7 +19,6 @@ import {
   RotateCw,
   ScanSearch,
   Search,
-  ShieldCheck,
   Sparkles,
   Target,
   WifiOff,
@@ -29,7 +27,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Chip } from "../components/Chip";
 import { createImageFingerprint } from "../features/questionSearch/imageFingerprint";
-import { OcrUnavailableError, isOcrLikelyAvailable } from "../features/questionSearch/ocrEngine";
+import { OcrUnavailableError } from "../features/questionSearch/ocrEngine";
 import {
   buildQuestionSearchSignal,
   getCieMathDatabaseStats,
@@ -104,6 +102,8 @@ const componentFilters: Array<{ id: CieMathComponentGroup; label: string; descri
   { id: "statistics", label: "Statistics", description: "Paper 5 / Paper 6" },
 ];
 
+const archiveSubjectTones = ["#111827", "#14532D", "#1E3A8A", "#6D28D9", "#9F1239", "#92400E", "#0F766E", "#374151"];
+
 export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPageProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [mode, setMode] = useState<SearchMode>("photo");
@@ -132,6 +132,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   );
   const mathPaperArchive =
     selectedArchiveSubject?.board === "CAIE" && selectedArchiveSubject.syllabusCode === "9709" ? math9709PaperDatabase : [];
+  const selectedSubjectHasPaperBrowser = mathPaperArchive.length > 0;
   const canSearchArchive = Boolean(downloadedSource);
   const databaseStats = useMemo(
     () =>
@@ -213,7 +214,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
       setDownloadStatus("done");
     } catch (error) {
       setDownloadStatus("error");
-      setDownloadError(error instanceof Error ? error.message : "题库下载暂不可用。");
+      setDownloadError(error instanceof Error ? error.message : "题库暂时不能准备。");
     }
   };
 
@@ -244,7 +245,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
 
   const runOcr = async (image: UploadedImageState, useBinarize: boolean) => {
     if (!downloadedSource) {
-      setImageError("请先选择科目并下载本地题库包，再开始搜题。");
+      setImageError("请先选择已经准备好的科目，再开始搜题。");
       return;
     }
 
@@ -267,7 +268,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
     } catch (error) {
       setOcrProgress({ stage: "error", ratio: 0, label: "识别未完成" });
       if (error instanceof OcrUnavailableError) {
-        setImageError(`本地识别引擎暂不可用：${error.message} 已切换到文件名 + 图片指纹搜索，你也可以手动输入题号。`);
+        setImageError("这张图暂时没有读清楚。你可以手动输入卷号、题号或知识点继续查找。");
       } else {
         setImageError("识别图片时出现问题，已切换到关键词搜索。");
       }
@@ -280,7 +281,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   const handlePhotoSelected = async (file?: File) => {
     if (!file) return;
     if (!downloadedSource) {
-      setImageError("请先选择科目并下载本地题库包，再上传图片。");
+      setImageError("请先选择已经准备好的科目，再选择图片。");
       return;
     }
 
@@ -310,8 +311,8 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   return (
     <main className="question-search-page px-5 pb-28 pt-7">
       <header className="mb-5">
-        <p className="text-sm font-bold text-muted">2018+ 本地题库包 · OCR 搜题</p>
-        <h1 className="mt-1 text-3xl font-black tracking-normal text-ink">本地搜题</h1>
+        <p className="text-sm font-bold text-muted">先选科目，再找题目和答案</p>
+        <h1 className="mt-1 text-3xl font-black tracking-normal text-ink">搜题</h1>
       </header>
 
       <SubjectArchivePanel
@@ -326,7 +327,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
 
       <section className="rounded-[30px] bg-white p-2 shadow-soft">
         <div className="grid grid-cols-2 gap-1 rounded-[24px] bg-cream p-1">
-          <ModeButton active={mode === "photo"} icon={<Camera size={16} />} label="拍照搜题" onClick={() => setMode("photo")} />
+          <ModeButton active={mode === "photo"} icon={<Camera size={16} />} label="图片搜题" onClick={() => setMode("photo")} />
           <ModeButton active={mode === "mistakes"} icon={<NotebookTabs size={16} />} label="错题总结" onClick={() => setMode("mistakes")} />
         </div>
       </section>
@@ -340,14 +341,17 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             canSearch={canSearchArchive}
           />
 
-          {mathPaperArchive.length > 0 ? <MathPaperBrowser papers={mathPaperArchive} canSearch={canSearchArchive} /> : null}
+          {selectedSubjectHasPaperBrowser ? (
+            <MathPaperBrowser papers={mathPaperArchive} canSearch={canSearchArchive} />
+          ) : selectedArchiveSubject ? (
+            <PlannedPaperBrowser subject={selectedArchiveSubject} />
+          ) : null}
 
           <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               disabled={!canSearchArchive}
               onChange={(event) => handlePhotoSelected(event.target.files?.[0])}
@@ -373,10 +377,10 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
                     <Camera size={24} />
                   </span>
                   <span className="mt-3 block text-lg font-black text-ink">
-                    {canSearchArchive ? `拍照 / 上传${selectedArchiveSubject?.name ?? ""}题目` : "先下载本地题库包"}
+                    {canSearchArchive ? `选择${selectedArchiveSubject?.name ?? ""}题目图片` : "先准备当前科目题库"}
                   </span>
                   <span className="mt-1 block text-xs font-bold text-muted">
-                    {canSearchArchive ? "本地识别，图片不会上传服务器" : "下载完成后，搜索会直接在本地完成"}
+                    {canSearchArchive ? "可从相册选择，也可以拍照；图片不会上传" : "数学已可用，其它科目正在整理"}
                   </span>
                 </span>
               )}
@@ -401,9 +405,9 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
                     binarize ? "bg-ink text-white" : "bg-cream text-ink"
                   }`}
                 >
-                  二值化 {binarize ? "开" : "关"}
+                  图片增强 {binarize ? "开" : "关"}
                 </button>
-                <span className="text-[11px] font-bold text-muted">识别不准时可切换二值化重试</span>
+                <span className="text-[11px] font-bold text-muted">看不清时可切换增强后重试</span>
               </div>
             ) : null}
 
@@ -417,7 +421,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
                 onKeyDown={(event) => {
                   if (event.key === "Enter") saveSearch();
                 }}
-                placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、topic、关键词" : "先下载当前科目的本地题库包"}
+                placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、知识点、关键词" : "先选择可用科目"}
                 className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
               />
             </div>
@@ -449,7 +453,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
           {ocrOutcome && !headlineResult && !isScanning ? (
             <EmptyState
               title="识别到文字，但没匹配到本地题"
-              detail="本地种子题库较小，可在下方手动输入 Paper / 题号，或换一张更清晰、保留页眉的截图。"
+              detail="可以在下方手动输入卷号 / 题号，或换一张更清晰、保留页眉的截图。"
             />
           ) : null}
 
@@ -582,10 +586,10 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
     <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-muted">数学 9709 database</p>
-          <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找 QP 和 MS</h2>
+          <p className="text-xs font-black text-muted">数学 9709 题库</p>
+          <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找试卷和答案</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
-            {canSearch ? "本地索引已启用；也可以直接按文件夹打开对应卷号。" : "先浏览数据库；下载题包后可用卷号和文件名本地搜索。"}
+            {canSearch ? "可以直接按文件夹打开对应卷号。" : "先浏览题库；准备好后可用卷号和文件名搜索。"}
           </p>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
@@ -595,8 +599,8 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
 
       <div className="grid grid-cols-3 gap-2">
         <ArchiveMetric icon={<CalendarDays size={14} />} label="月份" value={`${math9709PaperDatabaseStats.sessionCount}`} />
-        <ArchiveMetric icon={<FileText size={14} />} label="QP" value={`${math9709PaperDatabaseStats.questionPaperCount}`} />
-        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="MS" value={`${math9709PaperDatabaseStats.markSchemeCount}`} />
+        <ArchiveMetric icon={<FileText size={14} />} label="试卷" value={`${math9709PaperDatabaseStats.questionPaperCount}`} />
+        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="答案" value={`${math9709PaperDatabaseStats.markSchemeCount}`} />
       </div>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
@@ -660,7 +664,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
               rel="noreferrer"
               className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-black text-ink"
             >
-              来源
+              原页面
               <ExternalLink size={12} />
             </a>
           </div>
@@ -679,14 +683,53 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <PaperQuickLink icon={<FileText size={14} />} label="QP" link={paper.questionPaper} />
-                  <PaperQuickLink icon={<BookOpenCheck size={14} />} label="MS" link={paper.markScheme} />
+                  <PaperQuickLink icon={<FileText size={14} />} label="试卷" link={paper.questionPaper} />
+                  <PaperQuickLink icon={<BookOpenCheck size={14} />} label="答案" link={paper.markScheme} />
                 </div>
               </article>
             ))}
           </div>
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function PlannedPaperBrowser({ subject }: { subject: QuestionArchiveSubject }) {
+  return (
+    <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-muted">{subject.name}题库</p>
+          <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找试卷和答案</h2>
+          <p className="mt-1 text-xs font-bold leading-5 text-muted">
+            这个科目的题库正在整理，完成后会和数学一样进入年份、考试月份和卷号文件夹。
+          </p>
+        </div>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
+          <FolderOpen size={19} />
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <ArchiveMetric icon={<CalendarDays size={14} />} label="年份" value={`${subject.fromYear}+`} />
+        <ArchiveMetric icon={<FileText size={14} />} label="试卷" value="整理中" />
+        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="答案" value="整理中" />
+      </div>
+
+      <div className="mt-4 rounded-[26px] bg-cream p-3">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink">
+            <FolderOpen size={17} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-ink">题库准备中</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-muted">
+              你现在可以先切回数学测试完整流程；这个科目完成后会使用同样的文件夹结构。
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -769,27 +812,28 @@ function SubjectArchivePanel({
   const buttonLabel = isDownloading
     ? "正在准备"
     : selectedMeta
-      ? "更新本地题包"
+      ? "更新题库"
       : canDownload
-        ? "下载 2018+ 题目答案"
-        : "等待 database";
+        ? "准备 2018+ 题目答案"
+        : "题库准备中";
 
   return (
     <section className="mb-4 rounded-[32px] bg-white p-4 shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-muted">科目题库包</p>
-          <h2 className="mt-1 text-xl font-black text-ink">选择科目后本地搜索</h2>
+          <p className="text-xs font-black text-muted">选择科目</p>
+          <h2 className="mt-1 text-xl font-black text-ink">先选科目，再找题目</h2>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
-          <Database size={20} />
+          <BookOpenCheck size={20} />
         </span>
       </div>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-        {subjects.map((subject) => {
+        {subjects.map((subject, index) => {
           const selected = selectedSubject?.id === subject.id;
           const meta = metas[subject.id];
+          const selectedBackground = archiveSubjectTones[index % archiveSubjectTones.length];
 
           return (
             <button
@@ -797,20 +841,22 @@ function SubjectArchivePanel({
               type="button"
               onClick={() => onSelect(subject.id)}
               aria-pressed={selected}
-              className="grid min-w-[142px] gap-2 rounded-[24px] border p-3 text-left transition"
+              className={`grid min-w-[142px] gap-2 rounded-[24px] border p-3 text-left transition ${
+                selected ? "shadow-[0_12px_24px_rgba(15,23,42,0.18)]" : ""
+              }`}
               style={{
-                backgroundColor: selected ? subject.color : "rgba(255,255,255,0.72)",
-                borderColor: selected ? subject.accent : "rgba(0,0,0,0.06)",
+                backgroundColor: selected ? selectedBackground : "rgba(255,255,255,0.72)",
+                borderColor: selected ? selectedBackground : "rgba(0,0,0,0.06)",
               }}
             >
               <span className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-black text-ink">{subject.name}</span>
-                {meta ? <CheckCircle2 size={15} className="shrink-0 text-[#166534]" /> : null}
+                <span className={`truncate text-sm font-black ${selected ? "text-white" : "text-ink"}`}>{subject.name}</span>
+                {meta ? <CheckCircle2 size={15} className={`shrink-0 ${selected ? "text-white" : "text-[#166534]"}`} /> : null}
               </span>
-              <span className="text-[11px] font-black text-muted">
+              <span className={`text-[11px] font-black ${selected ? "text-white/75" : "text-muted"}`}>
                 {subject.board} {subject.syllabusCode}
               </span>
-              <ArchiveStatusPill subject={subject} meta={meta} />
+              <ArchiveStatusPill subject={subject} meta={meta} selected={selected} />
             </button>
           );
         })}
@@ -833,11 +879,11 @@ function SubjectArchivePanel({
 
           <div className="mt-3 grid grid-cols-3 gap-2">
             <ArchiveMetric icon={<Layers3 size={14} />} label="范围" value={`${selectedSubject.fromYear}+`} />
-            <ArchiveMetric icon={<FileText size={14} />} label="题目" value={selectedMeta ? `${selectedMeta.questionCount}` : "未下载"} />
+            <ArchiveMetric icon={<FileText size={14} />} label="试卷" value={selectedMeta ? `${selectedMeta.questionCount}` : "未准备"} />
             <ArchiveMetric
               icon={<BookOpenCheck size={14} />}
               label="答案"
-              value={selectedMeta ? `${selectedMeta.answerCount}` : "未下载"}
+              value={selectedMeta ? `${selectedMeta.answerCount}` : "未准备"}
             />
           </div>
 
@@ -865,12 +911,24 @@ function SubjectArchivePanel({
   );
 }
 
-function ArchiveStatusPill({ subject, meta }: { subject: QuestionArchiveSubject; meta?: LocalQuestionArchiveMeta }) {
+function ArchiveStatusPill({
+  subject,
+  meta,
+  selected,
+}: {
+  subject: QuestionArchiveSubject;
+  meta?: LocalQuestionArchiveMeta;
+  selected: boolean;
+}) {
   if (meta) {
     return (
-      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-[#166534]">
+      <span
+        className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black ${
+          selected ? "bg-white text-ink" : "bg-white text-[#166534]"
+        }`}
+      >
         <CheckCircle2 size={12} />
-        已下载
+        已准备
       </span>
     );
   }
@@ -879,7 +937,7 @@ function ArchiveStatusPill({ subject, meta }: { subject: QuestionArchiveSubject;
     return (
       <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-ink">
         <Download size={12} />
-        可下载
+        可准备
       </span>
     );
   }
@@ -887,7 +945,7 @@ function ArchiveStatusPill({ subject, meta }: { subject: QuestionArchiveSubject;
   return (
     <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
       <WifiOff size={12} />
-      待接入
+      准备中
     </span>
   );
 }
@@ -930,8 +988,6 @@ function OcrBanner({
   archiveMeta?: LocalQuestionArchiveMeta;
   canSearch: boolean;
 }) {
-  const available = isOcrLikelyAvailable();
-
   return (
     <section className="mt-4 rounded-[28px] bg-[#DDE3EA] p-4 shadow-soft">
       <div className="flex items-start gap-3">
@@ -940,21 +996,20 @@ function OcrBanner({
         </span>
         <div className="min-w-0">
           <p className="text-xs font-black text-muted">
-            {subject ? `${subject.name} ${subject.syllabusCode}` : "本地 OCR 搜题"}
+            {subject ? `${subject.name} ${subject.syllabusCode}` : "选择科目"}
           </p>
           <h2 className="mt-1 text-lg font-black text-ink">
-            {canSearch ? "拍照 → 识别 → 本地匹配题目 / 答案" : "下载题包后启用本地搜索"}
+            {canSearch ? "选择图片或输入卷号找答案" : "这个科目题库正在准备"}
           </h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
             {canSearch
-              ? `识别在你的设备本地完成，当前题包 ${stats.questionCount} 个题目，${archiveMeta?.answerCount ?? 0} 个答案。`
-              : "当前科目还没有可搜索的本地题包。"}
-            {available ? "首次使用会下载一次轻量识别模型。" : "当前环境可能不支持本地识别，将回退到关键词搜索。"}
+              ? `当前已准备 ${stats.questionCount} 条题目线索和 ${archiveMeta?.answerCount ?? 0} 份答案。图片只在你的设备上读取。`
+              : "完成后会和数学一样，可以按年份、月份和卷号查找。"}
           </p>
           {canSearch ? (
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-muted">
-              <ShieldCheck size={13} />
-              数据源：{stats.sourceKind}
+              <CheckCircle2 size={13} />
+              已准备好
             </div>
           ) : null}
         </div>
@@ -1002,7 +1057,7 @@ function OcrResultCard({
           </span>
           <div>
             <h2 className="text-base font-black text-ink">识别结果</h2>
-            <p className="text-[11px] font-bold text-muted">{outcome.ocr.engine} · 本地识别</p>
+            <p className="text-[11px] font-bold text-muted">图片已读取</p>
           </div>
         </div>
         <span className="shrink-0 rounded-full bg-ink px-3 py-1 text-xs font-black text-white">匹配度 {result.confidence}%</span>
@@ -1030,7 +1085,7 @@ function OcrResultCard({
           <div className="mt-2 rounded-[18px] bg-white/70 p-2.5">
             <div className="mb-1 flex items-center gap-1.5 text-[11px] font-black text-muted">
               <BookOpenCheck size={13} />
-              Mark scheme
+              评分答案
             </div>
             <p className="text-xs font-bold leading-5 text-ink">{question.markSchemeSummary}</p>
           </div>
@@ -1038,8 +1093,8 @@ function OcrResultCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <PaperLink icon={<FileText size={14} />} label="题目 PDF" url={question.questionPdf.url} />
-        <PaperLink icon={<BookOpenCheck size={14} />} label="Mark scheme" url={question.markSchemePdf.url} />
+        <PaperLink icon={<FileText size={14} />} label="试卷" url={question.questionPdf.url} />
+        <PaperLink icon={<BookOpenCheck size={14} />} label="答案" url={question.markSchemePdf.url} />
       </div>
 
       {result.matchReasons.length > 0 ? (
@@ -1059,7 +1114,7 @@ function OcrResultCard({
       >
         <span className="flex items-center gap-1.5">
           <ScanSearch size={14} />
-          OCR 原始文本（置信度 {outcome.ocr.confidence}%）
+          查看识别到的文字
         </span>
         <ChevronDown size={15} className={`transition-transform ${showRaw ? "rotate-180" : ""}`} />
       </button>
@@ -1070,8 +1125,8 @@ function OcrResultCard({
           </pre>
           {processedPreview ? (
             <div>
-              <p className="mb-1 px-1 text-[11px] font-black text-muted">预处理后图像</p>
-              <img src={processedPreview} alt="Processed" className="w-full rounded-[18px] border border-black/5" />
+              <p className="mb-1 px-1 text-[11px] font-black text-muted">增强后的图片</p>
+              <img src={processedPreview} alt="增强后的题目图片" className="w-full rounded-[18px] border border-black/5" />
             </div>
           ) : null}
         </div>
@@ -1126,7 +1181,7 @@ function RecognitionPanel({
         <SignalLine
           icon={<Target size={14} />}
           label="试卷定位"
-          value={signal.paperRefs.length > 0 ? signal.paperRefs.map(formatPaperReference).join(" · ") : "未识别到 Paper / 题号"}
+          value={signal.paperRefs.length > 0 ? signal.paperRefs.map(formatPaperReference).join(" · ") : "未识别到卷号 / 题号"}
         />
       </div>
 
@@ -1208,15 +1263,15 @@ function QuestionCard({ result }: { result: QuestionSearchResult }) {
         <div className="rounded-[22px] bg-cream p-3">
           <div className="mb-2 flex items-center gap-2 text-xs font-black text-muted">
             <BookOpenCheck size={14} />
-            Mark scheme
+            评分答案
           </div>
           <p className="text-sm font-bold leading-6 text-ink">{question.markSchemeSummary}</p>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <PaperLink icon={<FileText size={14} />} label="题目 PDF" url={question.questionPdf.url} />
-        <PaperLink icon={<BookOpenCheck size={14} />} label="Mark scheme" url={question.markSchemePdf.url} />
+        <PaperLink icon={<FileText size={14} />} label="试卷" url={question.questionPdf.url} />
+        <PaperLink icon={<BookOpenCheck size={14} />} label="答案" url={question.markSchemePdf.url} />
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-muted">

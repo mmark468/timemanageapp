@@ -45,12 +45,12 @@ export interface QuestionArchiveDownloadResult {
 }
 
 const subjectDescriptions: Record<string, string> = {
-  "CAIE-9709": "当前 MVP 内置数学 9709 从 2018 年后的 QP/MS 索引，并保留后续 database 接口。",
-  "CAIE-9708": "经济题库会通过后端 database 接入，当前先保留科目入口。",
-  "CAIE-9990": "心理学题库会通过后端 database 接入，当前先保留科目入口。",
-  "CAIE-9618": "计算机题库会通过后端 database 接入，当前先保留科目入口。",
-  "CAIE-9093": "英语题库会通过后端 database 接入，当前先保留科目入口。",
-  "CAIE-9702": "物理题库会通过后端 database 接入，当前先保留科目入口。",
+  "CAIE-9709": "数学题库已整理好，可按年份、考试月份和卷号查找试卷与答案。",
+  "CAIE-9708": "经济题库正在准备，之后会和数学一样按年份、月份和卷号查找。",
+  "CAIE-9990": "心理学题库正在准备，之后会和数学一样按年份、月份和卷号查找。",
+  "CAIE-9618": "计算机题库正在准备，之后会和数学一样按年份、月份和卷号查找。",
+  "CAIE-9093": "英语题库正在准备，之后会和数学一样按年份、月份和卷号查找。",
+  "CAIE-9702": "物理题库正在准备，之后会和数学一样按年份、月份和卷号查找。",
 };
 
 export function buildQuestionArchiveSubjects(subjects: Subject[]): QuestionArchiveSubject[] {
@@ -73,9 +73,9 @@ export function buildQuestionArchiveSubjects(subjects: Subject[]): QuestionArchi
         accent: subject.accent,
         fromYear: archiveFromYear,
         availability: isBundledMath ? "ready" : "planned",
-        availabilityLabel: isBundledMath ? "可下载" : "待接 database",
+        availabilityLabel: isBundledMath ? "可准备" : "题库准备中",
         sourceKind: isBundledMath ? "bundled-database" : "remote-database",
-        description: subjectDescriptions[key] ?? `${subject.name} 题库入口已预留，后续可接后端索引。`,
+        description: subjectDescriptions[key] ?? `${subject.name} 题库正在准备，之后会按年份、月份和卷号查找。`,
       } satisfies QuestionArchiveSubject;
     });
 
@@ -97,7 +97,7 @@ export function writeQuestionArchiveMetas(metas: LocalQuestionArchiveMetaMap) {
 export async function downloadQuestionArchive(subject: QuestionArchiveSubject): Promise<QuestionArchiveDownloadResult> {
   const source = getQuestionArchiveSource(subject);
   if (!source) {
-    throw new Error(`${subject.name} 题库还没有连接 database。`);
+    throw new Error(`${subject.name}题库正在准备中。`);
   }
 
   const isMath9709 = subject.board === "CAIE" && subject.syllabusCode === "9709";
@@ -179,7 +179,7 @@ const fallbackMathArchiveSubject: QuestionArchiveSubject = {
   accent: "#4CAFD6",
   fromYear: archiveFromYear,
   availability: "ready",
-  availabilityLabel: "可下载",
+  availabilityLabel: "可准备",
   sourceKind: "bundled-database",
   description: subjectDescriptions["CAIE-9709"],
 };
