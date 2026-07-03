@@ -4,7 +4,6 @@ import {
   Camera,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   Clock3,
   Download,
   ExternalLink,
@@ -13,7 +12,6 @@ import {
   Hash,
   HardDrive,
   Layers3,
-  Lightbulb,
   Loader2,
   NotebookTabs,
   RotateCw,
@@ -52,6 +50,7 @@ import {
   type Math9709SeriesCode,
 } from "../features/questionSearch/math9709PaperDatabase";
 import type {
+  CieMathQuestion,
   CieMathComponentGroup,
   ImageFingerprint,
   LocatedQuestion,
@@ -443,11 +442,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
           {isScanning && ocrProgress ? <OcrProgressCard progress={ocrProgress} /> : null}
 
           {headlineResult ? (
-            <OcrResultCard
-              result={headlineResult}
-              outcome={ocrOutcome!}
-              processedPreview={ocrOutcome?.ocr.processedPreview}
-            />
+            <OcrResultCard result={headlineResult} />
           ) : null}
 
           {ocrOutcome && !headlineResult && !isScanning ? (
@@ -1036,16 +1031,7 @@ function OcrProgressCard({ progress }: { progress: OcrProgress }) {
   );
 }
 
-function OcrResultCard({
-  result,
-  outcome,
-  processedPreview,
-}: {
-  result: LocatedQuestion;
-  outcome: QuestionOcrOutcome;
-  processedPreview?: string;
-}) {
-  const [showRaw, setShowRaw] = useState(false);
+function OcrResultCard({ result }: { result: LocatedQuestion }) {
   const { question } = result;
 
   return (
@@ -1069,32 +1055,19 @@ function OcrResultCard({
           <p className="mt-1 inline-block rounded-full bg-cream px-2.5 py-1 text-xs font-black text-ink">{result.paperCode}</p>
         </ResultField>
 
-        <ResultField icon={<FileText size={15} />} label="题目">
-          <p className="text-sm font-black leading-6 text-ink">
-            Q{question.questionNumber} · {question.title}
-          </p>
-          <p className="mt-1 text-sm font-bold leading-6 text-muted">{question.questionSummary}</p>
+        <ResultField icon={<FileText size={15} />} label="识别到的题目">
+          <p className="text-base font-black leading-6 text-ink">{formatIdentifiedQuestion(question)}</p>
+          <p className="mt-1 text-xs font-bold leading-5 text-muted">请打开试卷或 MS 自己对照题目和答案。</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <span className="rounded-full bg-cream px-2 py-1 text-[11px] font-black text-muted">{question.topic}</span>
             <span className="rounded-full bg-cream px-2 py-1 text-[11px] font-black text-muted">{question.paperLabel}</span>
-          </div>
-        </ResultField>
-
-        <ResultField icon={<Lightbulb size={15} />} label="答案" highlight>
-          <p className="text-sm font-black leading-6 text-ink">{question.answer}</p>
-          <div className="mt-2 rounded-[18px] bg-white/70 p-2.5">
-            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-black text-muted">
-              <BookOpenCheck size={13} />
-              评分答案
-            </div>
-            <p className="text-xs font-bold leading-5 text-ink">{question.markSchemeSummary}</p>
           </div>
         </ResultField>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <PaperLink icon={<FileText size={14} />} label="试卷" url={question.questionPdf.url} />
-        <PaperLink icon={<BookOpenCheck size={14} />} label="答案" url={question.markSchemePdf.url} />
+        <PaperLink icon={<BookOpenCheck size={14} />} label="MS" url={question.markSchemePdf.url} />
       </div>
 
       {result.matchReasons.length > 0 ? (
@@ -1107,30 +1080,6 @@ function OcrResultCard({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setShowRaw((value) => !value)}
-        className="mt-3 flex w-full items-center justify-between rounded-[18px] bg-cream px-3 py-2 text-xs font-black text-ink"
-      >
-        <span className="flex items-center gap-1.5">
-          <ScanSearch size={14} />
-          查看识别到的文字
-        </span>
-        <ChevronDown size={15} className={`transition-transform ${showRaw ? "rotate-180" : ""}`} />
-      </button>
-      {showRaw ? (
-        <div className="mt-2 grid gap-2">
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-[18px] bg-cream p-3 text-[11px] font-bold leading-5 text-muted">
-            {outcome.ocr.text || "（未识别到文字）"}
-          </pre>
-          {processedPreview ? (
-            <div>
-              <p className="mb-1 px-1 text-[11px] font-black text-muted">增强后的图片</p>
-              <img src={processedPreview} alt="增强后的题目图片" className="w-full rounded-[18px] border border-black/5" />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -1187,7 +1136,7 @@ function RecognitionPanel({
 
       {topResult ? (
         <p className="mt-3 rounded-[20px] bg-white p-3 text-sm font-bold leading-6 text-ink">
-          最可能是 {topResult.question.syllabusCode}/{topResult.question.componentCode} Q{topResult.question.questionNumber}，
+          识别到：{topResult.question.syllabusCode}/{topResult.question.componentCode} · {formatIdentifiedQuestion(topResult.question)}，
           匹配度 {topResult.score}%。
         </p>
       ) : null}
@@ -1219,6 +1168,14 @@ function formatPaperReference(reference: ParsedPaperReference) {
     .join(" ");
 }
 
+function formatIdentifiedQuestion(question: CieMathQuestion) {
+  if (question.questionNumber.toLowerCase() === "paper") {
+    return `Paper ${question.componentCode} · ${question.title}`;
+  }
+
+  return `Q${question.questionNumber} · ${question.title}`;
+}
+
 function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: ReactNode; label: string; onClick: () => void }) {
   return (
     <button
@@ -1244,34 +1201,22 @@ function QuestionCard({ result }: { result: QuestionSearchResult }) {
           <p className="text-xs font-black text-muted">
             {question.board} · {question.syllabusCode}/{question.componentCode} · {question.series} {question.year}
           </p>
-          <h3 className="mt-2 text-base font-black leading-6 text-ink">
-            Q{question.questionNumber} · {question.title}
-          </h3>
+          <h3 className="mt-2 text-base font-black leading-6 text-ink">{formatIdentifiedQuestion(question)}</h3>
         </div>
         <span className="shrink-0 rounded-full bg-ink px-3 py-1 text-xs font-black text-white">{result.score}%</span>
       </div>
 
-      <div className="grid gap-3">
-        <div className="rounded-[22px] bg-cream p-3">
-          <div className="mb-2 flex items-center gap-2 text-xs font-black text-muted">
-            <Lightbulb size={14} />
-            答案
-          </div>
-          <p className="text-sm font-bold leading-6 text-ink">{question.answer}</p>
+      <div className="rounded-[22px] bg-cream p-3">
+        <div className="mb-2 flex items-center gap-2 text-xs font-black text-muted">
+          <FileText size={14} />
+          识别到的题目
         </div>
-
-        <div className="rounded-[22px] bg-cream p-3">
-          <div className="mb-2 flex items-center gap-2 text-xs font-black text-muted">
-            <BookOpenCheck size={14} />
-            评分答案
-          </div>
-          <p className="text-sm font-bold leading-6 text-ink">{question.markSchemeSummary}</p>
-        </div>
+        <p className="text-sm font-bold leading-6 text-ink">{formatIdentifiedQuestion(question)}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <PaperLink icon={<FileText size={14} />} label="试卷" url={question.questionPdf.url} />
-        <PaperLink icon={<BookOpenCheck size={14} />} label="答案" url={question.markSchemePdf.url} />
+        <PaperLink icon={<BookOpenCheck size={14} />} label="MS" url={question.markSchemePdf.url} />
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-muted">
