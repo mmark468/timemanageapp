@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## 2026-07-03 - 合并今日安排并补充数学题库卷号入口
+
+### 本次修改内容
+
+- 首页删除独立“今日任务”区块，将今日任务合并进“今日安排”的时间轴样式里。
+- 保留今日安排的时间轴设计，并把任务的截止时间、科目、优先级、级别和完成勾选合并到每条安排中。
+- 今日安排标题右侧保留添加任务入口和时间轴入口，让首页更简洁。
+- 搜题页选中数学后，下滑可看到清晰的数学题库卷号列表。
+- 数学题库按卷号聚合，支持直接点击 `QP` 打开 question paper，点击 `MS` 打开 mark scheme。
+- 已运行 `npm run build:vite` 和 `npm run build`，构建与 TypeScript 检查成功。
+
+### 修改文件
+
+- `src/pages/TodayPage.tsx`
+- `src/pages/QuestionSearchPage.tsx`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：有影响。首页信息布局更紧凑；搜题页新增数学题库卷号卡片。
+- 数据结构：无影响，未新增 localStorage key 或领域模型字段。
+- 接口：无影响，未修改组件对外 API 或后端接口。
+- 依赖：无影响，未修改 `package.json` 或 `package-lock.json`。
+
+### 潜在风险
+
+- 首页不再单独展示旧的任务卡片删除按钮；任务仍可在其它任务/日历相关页面管理。
+- 今日安排中无开始时间的任务会以“截止”形式进入时间轴列表，排序在当天具体时间安排之后。
+- 数学题库卷号入口仍基于当前 MVP 内置 seed 题库，不代表完整官方全量题库。
+
+### 建议 commit message
+
+```text
+feat: merge today tasks into schedule and add math paper library
+```
+
 ## 2026-07-03 - 搜题页改为科目题包下载后本地搜索
 
 ### 本次修改内容

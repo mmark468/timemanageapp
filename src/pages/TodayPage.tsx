@@ -1,9 +1,12 @@
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Circle,
+  Flag,
   ListChecks,
   Pause,
   Play,
@@ -16,9 +19,8 @@ import {
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ProgressBar } from "../components/ProgressBar";
-import { TaskCard } from "../components/TaskCard";
 import type { DailyTimelineItem, PomodoroSession, PomodoroTarget, Subject, Task, TimetableClass } from "../types";
-import { daysBetween, formatChineseDate, getWeekdayLabel, minutesToText, TODAY } from "../utils/date";
+import { daysBetween, daysLeftText, formatChineseDate, getWeekdayLabel, minutesToText, TODAY } from "../utils/date";
 import { useStoredState } from "../utils/storage";
 
 interface TodayPageProps {
@@ -39,6 +41,19 @@ interface TodayPageProps {
   onAddTask: () => void;
   onOpenQuestionSearch: () => void;
   onOpenSettings: () => void;
+}
+
+interface TodayScheduleEntry {
+  id: string;
+  time: string;
+  endTime?: string;
+  title: string;
+  color: string;
+  tag?: string;
+  urgent: boolean;
+  timelineItem?: DailyTimelineItem;
+  task?: Task;
+  subject?: Subject;
 }
 
 export function TodayPage({
@@ -69,10 +84,42 @@ export function TodayPage({
       (task.date === TODAY || task.dueDate === TODAY) &&
       !["课程", "大考", "临时考试", "考试", "放假", "突发事件", "番茄钟任务"].includes(task.type),
   );
-  const todayTasks = todayTaskPool.slice(0, 3);
   const todaySessions = sessions.filter((session) => session.completedAt.startsWith(TODAY));
   const focusMinutes = todaySessions.reduce((sum, session) => sum + session.duration, 0);
-  const todaySchedule = timelineItems.slice(0, 5);
+  const taskById = new Map(todayTaskPool.map((task) => [task.id, task]));
+  const scheduledTaskIds = new Set(timelineItems.map((item) => item.taskId).filter(Boolean));
+  const todaySchedule: TodayScheduleEntry[] = [
+    ...timelineItems.map((item) => {
+      const task = item.taskId ? taskById.get(item.taskId) : undefined;
+
+      return {
+        id: item.id,
+        time: item.time,
+        endTime: item.endTime,
+        title: item.title,
+        color: item.color,
+        tag: item.tag,
+        urgent: item.tag === "突发",
+        timelineItem: item,
+        task,
+        subject: subjects.find((subject) => subject.id === (task?.subjectId ?? item.subjectId)),
+      } satisfies TodayScheduleEntry;
+    }),
+    ...todayTaskPool
+      .filter((task) => !scheduledTaskIds.has(task.id))
+      .map((task) => ({
+        id: `today-due-${task.id}`,
+        time: task.startTime ?? "截止",
+        endTime: task.endTime,
+        title: task.title,
+        color: task.color ?? subjects.find((subject) => subject.id === task.subjectId)?.color ?? "#EEF2F7",
+        tag: task.startTime ? task.type : "截止",
+        urgent: task.priority === "高",
+        task,
+        subject: subjects.find((subject) => subject.id === task.subjectId),
+      })),
+  ].sort((left, right) => scheduleSortValue(left).localeCompare(scheduleSortValue(right)));
+  const visibleSchedule = todaySchedule.slice(0, 7);
   const nextSchedule = todaySchedule[0];
   const examProgress = Math.max(8, Math.min(96, 100 - daysLeft * 1.6));
 
@@ -183,71 +230,112 @@ export function TodayPage({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-black text-ink">今日安排</p>
-            <p className="text-xs text-muted">课表 + 临时事项</p>
+            <p className="text-xs text-muted">课表 + 任务截止时间</p>
           </div>
-          <button
-            type="button"
-            onClick={onOpenTimeline}
-            className="flex h-9 items-center gap-1 rounded-full bg-skySoft px-3 text-xs font-black text-ink"
-          >
-            时间轴
-            <ArrowRight size={14} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onAddTask}
+              aria-label="添加待办"
+              className="grid h-9 w-9 place-items-center rounded-full bg-cream text-ink"
+            >
+              <Plus size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenTimeline}
+              className="flex h-9 items-center gap-1 rounded-full bg-skySoft px-3 text-xs font-black text-ink"
+            >
+              时间轴
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
         <div className="space-y-3">
-          {todaySchedule.map((item) => {
-            const urgent = item.tag === "突发";
-
+          {visibleSchedule.map((item) => {
             return (
-              <button
-                type="button"
+              <div
+                role={item.timelineItem ? "button" : undefined}
+                tabIndex={item.timelineItem ? 0 : undefined}
                 key={item.id}
-                onClick={() => onEditTimelineItem(item)}
+                onClick={() => {
+                  if (item.timelineItem) onEditTimelineItem(item.timelineItem);
+                }}
+                onKeyDown={(event) => {
+                  if (!item.timelineItem) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onEditTimelineItem(item.timelineItem);
+                  }
+                }}
                 className={`grid w-full grid-cols-[72px_8px_1fr] items-center gap-3 rounded-[22px] p-3 text-left ${
-                  urgent ? "bg-[#FFF1F1] ring-1 ring-[#F7CACA]" : "bg-cream"
+                  item.urgent ? "bg-[#FFF1F1] ring-1 ring-[#F7CACA]" : "bg-cream"
                 }`}
               >
-                <div className={`rounded-[18px] px-2.5 py-2 text-center ${urgent ? "bg-[#D94747] text-white" : "bg-white text-ink"}`}>
+                <div className={`rounded-[18px] px-2.5 py-2 text-center ${item.urgent ? "bg-[#D94747] text-white" : "bg-white text-ink"}`}>
                   <p className="text-base font-black leading-none">{item.time}</p>
                   <p className="mt-1 truncate text-[10px] font-black">{item.tag ?? "事项"}</p>
                 </div>
-                <span className="h-12 rounded-full" style={{ backgroundColor: urgent ? "#D94747" : item.color }} aria-hidden />
-                <p className="min-w-0 truncate text-sm font-black text-ink">{item.title}</p>
-              </button>
+                <span className="h-14 rounded-full" style={{ backgroundColor: item.urgent ? "#D94747" : item.color }} aria-hidden />
+                <div className="min-w-0">
+                  <div className="flex min-w-0 items-start justify-between gap-2">
+                    <p className={`min-w-0 truncate text-sm font-black text-ink ${item.task?.completed ? "line-through opacity-60" : ""}`}>
+                      {item.title}
+                    </p>
+                    {item.task ? (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={item.task.completed ? "标记未完成" : "标记完成"}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onToggleTask(item.task!.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onToggleTask(item.task!.id);
+                          }
+                        }}
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+                          item.task.completed ? "bg-mint text-ink" : "bg-white text-muted"
+                        }`}
+                      >
+                        {item.task.completed ? <Check size={16} /> : <Circle size={15} />}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black text-muted">
+                    {item.endTime ? <span className="rounded-full bg-white px-2 py-1">{item.endTime}</span> : null}
+                    {item.subject ? <span className="rounded-full bg-white px-2 py-1">{item.subject.name}</span> : null}
+                    {item.task ? (
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
+                          <Flag size={12} />
+                          截止 {daysLeftText(item.task.dueDate)}
+                        </span>
+                        <span className="rounded-full bg-white px-2 py-1">{item.task.priority}</span>
+                        <span className="rounded-full bg-white px-2 py-1">{item.task.level}级</span>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             );
           })}
-          {todaySchedule.length === 0 ? (
+          {visibleSchedule.length === 0 ? (
             <div className="rounded-[22px] bg-cream p-5 text-center text-sm font-bold text-muted">今天暂时没有安排</div>
           ) : null}
-        </div>
-      </section>
-
-      <section className="mt-5">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <h2 className="text-lg font-black text-ink">今日任务</h2>
-          <button
-            type="button"
-            onClick={onAddTask}
-            aria-label="添加待办"
-            className="grid h-10 w-10 place-items-center rounded-full bg-white text-ink shadow-soft"
-          >
-            <Plus size={18} />
-          </button>
-        </div>
-        <div className="space-y-3">
-          {todayTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              subject={subjects.find((subject) => subject.id === task.subjectId)}
-              onToggle={onToggleTask}
-              onDelete={onDeleteTask}
-            />
-          ))}
-          {todayTasks.length === 0 ? (
-            <div className="rounded-[24px] bg-white p-5 text-center text-sm font-bold text-muted shadow-soft">
-              今日任务已清空
-            </div>
+          {todaySchedule.length > visibleSchedule.length ? (
+            <button
+              type="button"
+              onClick={onOpenTimeline}
+              className="flex h-10 w-full items-center justify-center gap-1 rounded-full bg-white text-xs font-black text-ink"
+            >
+              查看全部 {todaySchedule.length} 条
+              <ArrowRight size={14} />
+            </button>
           ) : null}
         </div>
       </section>
@@ -265,6 +353,11 @@ export function TodayPage({
       </section>
     </main>
   );
+}
+
+function scheduleSortValue(entry: TodayScheduleEntry) {
+  if (/^\d{2}:\d{2}$/.test(entry.time)) return entry.time;
+  return entry.task?.priority === "高" ? "23:40" : "23:50";
 }
 
 function QuickStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {

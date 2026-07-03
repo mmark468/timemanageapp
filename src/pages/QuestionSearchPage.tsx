@@ -39,12 +39,15 @@ import {
   buildQuestionArchiveSubjects,
   downloadQuestionArchive,
   getDownloadedQuestionArchiveSource,
+  getQuestionArchiveSource,
   readQuestionArchiveMetas,
   type LocalQuestionArchiveMeta,
   type LocalQuestionArchiveMetaMap,
   type QuestionArchiveSubject,
 } from "../features/questionSearch/questionArchiveGateway";
 import type {
+  CieMathQuestion,
+  CiePaperLink,
   CieMathComponentGroup,
   ImageFingerprint,
   LocatedQuestion,
@@ -66,6 +69,19 @@ interface UploadedImageState {
   fileName: string;
   previewUrl: string;
   fingerprint?: ImageFingerprint;
+}
+
+interface MathPaperArchiveItem {
+  id: string;
+  paperCode: string;
+  paperLabel: string;
+  componentCode: string;
+  series: CieMathQuestion["series"];
+  year: number;
+  questionCount: number;
+  topics: string[];
+  questionPdf: CiePaperLink;
+  markSchemePdf: CiePaperLink;
 }
 
 const recentKey = "finished.questionSearch.recent";
@@ -105,6 +121,11 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   const downloadedSource = useMemo(
     () => getDownloadedQuestionArchiveSource(selectedArchiveSubject, selectedArchiveMeta),
     [selectedArchiveMeta, selectedArchiveSubject],
+  );
+  const selectedArchiveSource = useMemo(() => getQuestionArchiveSource(selectedArchiveSubject), [selectedArchiveSubject]);
+  const mathPaperArchive = useMemo(
+    () => buildMathPaperArchive(selectedArchiveSource?.questions ?? []),
+    [selectedArchiveSource?.questions],
   );
   const canSearchArchive = Boolean(downloadedSource);
   const databaseStats = useMemo(
@@ -314,6 +335,8 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             canSearch={canSearchArchive}
           />
 
+          {mathPaperArchive.length > 0 ? <MathPaperLibrary papers={mathPaperArchive} canSearch={canSearchArchive} /> : null}
+
           <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
             <input
               ref={fileInputRef}
@@ -487,6 +510,123 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
       )}
     </main>
   );
+}
+
+function buildMathPaperArchive(questions: CieMathQuestion[]): MathPaperArchiveItem[] {
+  const papers = new Map<string, MathPaperArchiveItem>();
+
+  for (const question of questions) {
+    const id = `${question.syllabusCode}-${question.year}-${question.series}-${question.componentCode}`;
+    const current = papers.get(id);
+
+    if (current) {
+      current.questionCount += 1;
+      current.topics = Array.from(new Set([...current.topics, question.topic])).slice(0, 4);
+      continue;
+    }
+
+    papers.set(id, {
+      id,
+      paperCode: formatMathPaperCode(question),
+      paperLabel: question.paperLabel,
+      componentCode: question.componentCode,
+      series: question.series,
+      year: question.year,
+      questionCount: 1,
+      topics: [question.topic],
+      questionPdf: question.questionPdf,
+      markSchemePdf: question.markSchemePdf,
+    });
+  }
+
+  return Array.from(papers.values()).sort(
+    (left, right) =>
+      right.year - left.year ||
+      seriesSortValue(left.series) - seriesSortValue(right.series) ||
+      Number(left.componentCode) - Number(right.componentCode),
+  );
+}
+
+function MathPaperLibrary({ papers, canSearch }: { papers: MathPaperArchiveItem[]; canSearch: boolean }) {
+  return (
+    <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-muted">数学题库</p>
+          <h2 className="mt-1 text-xl font-black text-ink">卷号和 Mark Scheme</h2>
+          <p className="mt-1 text-xs font-bold leading-5 text-muted">
+            {canSearch ? "已下载本地题包，可直接搜索或打开原卷。" : "先浏览卷号；下载题包后可在本地搜索题目。"}
+          </p>
+        </div>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
+          <BookOpenCheck size={19} />
+        </span>
+      </div>
+
+      <div className="grid gap-2">
+        {papers.map((paper) => (
+          <article key={paper.id} className="grid gap-3 rounded-[24px] bg-cream p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-6 text-ink">{paper.paperCode}</p>
+                <p className="mt-1 truncate text-xs font-black text-muted">{paper.paperLabel}</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-muted">
+                {paper.questionCount} 题
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {paper.topics.map((topic) => (
+                <span key={topic} className="rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
+                  {topic}
+                </span>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <PaperQuickLink icon={<FileText size={14} />} label="QP" url={paper.questionPdf.url} />
+              <PaperQuickLink icon={<BookOpenCheck size={14} />} label="MS" url={paper.markSchemePdf.url} />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PaperQuickLink({ icon, label, url }: { icon: ReactNode; label: string; url: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="flex h-10 items-center justify-center gap-2 rounded-full bg-ink text-xs font-black text-white"
+    >
+      {icon}
+      {label}
+      <ExternalLink size={12} />
+    </a>
+  );
+}
+
+function formatMathPaperCode(question: CieMathQuestion) {
+  const yearShort = String(question.year).slice(-2);
+  return `${question.syllabusCode}/${question.componentCode}/${seriesShortCode(question.series)}/${yearShort}`;
+}
+
+function seriesShortCode(series: CieMathQuestion["series"]) {
+  if (series === "February/March") return "F/M";
+  if (series === "October/November") return "O/N";
+  if (series === "Specimen") return "SP";
+  return "M/J";
+}
+
+function seriesSortValue(series: CieMathQuestion["series"]) {
+  if (series === "February/March") return 1;
+  if (series === "May/June") return 2;
+  if (series === "October/November") return 3;
+  return 4;
 }
 
 function SubjectArchivePanel({
