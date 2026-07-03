@@ -6,17 +6,22 @@ import {
   ChevronDown,
   Clock3,
   Database,
+  Download,
   ExternalLink,
   FileText,
   Hash,
+  HardDrive,
+  Layers3,
   Lightbulb,
   Loader2,
   NotebookTabs,
   RotateCw,
   ScanSearch,
   Search,
+  ShieldCheck,
   Sparkles,
   Target,
+  WifiOff,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -30,6 +35,15 @@ import {
   searchCieMathQuestions,
 } from "../features/questionSearch/questionSearchEngine";
 import { locateQuestionFromImage } from "../features/questionSearch/questionLocator";
+import {
+  buildQuestionArchiveSubjects,
+  downloadQuestionArchive,
+  getDownloadedQuestionArchiveSource,
+  readQuestionArchiveMetas,
+  type LocalQuestionArchiveMeta,
+  type LocalQuestionArchiveMetaMap,
+  type QuestionArchiveSubject,
+} from "../features/questionSearch/questionArchiveGateway";
 import type {
   CieMathComponentGroup,
   ImageFingerprint,
@@ -57,6 +71,7 @@ interface UploadedImageState {
 const recentKey = "finished.questionSearch.recent";
 
 type SearchMode = "photo" | "mistakes";
+type ArchiveDownloadStatus = "idle" | "downloading" | "done" | "error";
 
 const componentFilters: Array<{ id: CieMathComponentGroup; label: string; description: string }> = [
   { id: "all", label: "全部", description: "所有 9709 数学组件" },
@@ -76,8 +91,35 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   const [ocrOutcome, setOcrOutcome] = useState<QuestionOcrOutcome | null>(null);
   const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null);
   const [binarize, setBinarize] = useState(true);
+  const archiveSubjects = useMemo(() => buildQuestionArchiveSubjects(subjects), [subjects]);
+  const [selectedArchiveId, setSelectedArchiveId] = useState("");
+  const [archiveMetas, setArchiveMetas] = useState<LocalQuestionArchiveMetaMap>(() => readQuestionArchiveMetas());
+  const [downloadStatus, setDownloadStatus] = useState<ArchiveDownloadStatus>("idle");
+  const [downloadError, setDownloadError] = useState("");
 
-  const databaseStats = useMemo(() => getCieMathDatabaseStats(), []);
+  const selectedArchiveSubject = useMemo(
+    () => archiveSubjects.find((subject) => subject.id === selectedArchiveId) ?? archiveSubjects[0] ?? null,
+    [archiveSubjects, selectedArchiveId],
+  );
+  const selectedArchiveMeta = selectedArchiveSubject ? archiveMetas[selectedArchiveSubject.id] : undefined;
+  const downloadedSource = useMemo(
+    () => getDownloadedQuestionArchiveSource(selectedArchiveSubject, selectedArchiveMeta),
+    [selectedArchiveMeta, selectedArchiveSubject],
+  );
+  const canSearchArchive = Boolean(downloadedSource);
+  const databaseStats = useMemo(
+    () =>
+      downloadedSource
+        ? getCieMathDatabaseStats(downloadedSource)
+        : {
+            sourceKind: selectedArchiveSubject?.sourceKind ?? "not-downloaded",
+            questionCount: 0,
+            componentCount: 0,
+            components: [],
+            years: [],
+          },
+    [downloadedSource, selectedArchiveSubject?.sourceKind],
+  );
   const ocrText = ocrOutcome?.ocr.text ?? "";
   const effectiveQuery = query.trim() ? query : ocrText;
   const searchSignal = useMemo(
@@ -89,21 +131,65 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
       }),
     [effectiveQuery, uploadedImage?.fileName, uploadedImage?.fingerprint],
   );
-  const hasInput = hasQuestionSearchInput({
-    query: effectiveQuery,
-    fileName: uploadedImage?.fileName,
-    fingerprint: uploadedImage?.fingerprint,
-  });
+  const hasInput =
+    canSearchArchive &&
+    hasQuestionSearchInput({
+      query: effectiveQuery,
+      fileName: uploadedImage?.fileName,
+      fingerprint: uploadedImage?.fingerprint,
+    });
   const results = useMemo(
-    () =>
-      searchCieMathQuestions({
-        query: effectiveQuery,
-        fileName: uploadedImage?.fileName,
-        fingerprint: uploadedImage?.fingerprint,
-        componentGroup,
-      }),
-    [componentGroup, effectiveQuery, uploadedImage?.fileName, uploadedImage?.fingerprint],
+    () => {
+      if (!downloadedSource) return [];
+      return searchCieMathQuestions(
+        {
+          query: effectiveQuery,
+          fileName: uploadedImage?.fileName,
+          fingerprint: uploadedImage?.fingerprint,
+          componentGroup,
+        },
+        downloadedSource,
+      );
+    },
+    [componentGroup, downloadedSource, effectiveQuery, uploadedImage?.fileName, uploadedImage?.fingerprint],
   );
+
+  useEffect(() => {
+    if (!archiveSubjects.length) return;
+    if (!selectedArchiveId || !archiveSubjects.some((subject) => subject.id === selectedArchiveId)) {
+      setSelectedArchiveId(archiveSubjects[0].id);
+    }
+  }, [archiveSubjects, selectedArchiveId]);
+
+  useEffect(() => {
+    setDownloadStatus("idle");
+    setDownloadError("");
+    setQuery("");
+    setOcrOutcome(null);
+    setOcrProgress(null);
+    setImageError("");
+    setComponentGroup("all");
+    setUploadedImage((current) => {
+      if (current?.previewUrl) URL.revokeObjectURL(current.previewUrl);
+      return null;
+    });
+  }, [selectedArchiveSubject?.id]);
+
+  const handleDownloadArchive = async () => {
+    if (!selectedArchiveSubject) return;
+
+    setDownloadStatus("downloading");
+    setDownloadError("");
+
+    try {
+      const { meta } = await downloadQuestionArchive(selectedArchiveSubject);
+      setArchiveMetas((current) => ({ ...current, [selectedArchiveSubject.id]: meta }));
+      setDownloadStatus("done");
+    } catch (error) {
+      setDownloadStatus("error");
+      setDownloadError(error instanceof Error ? error.message : "题库下载暂不可用。");
+    }
+  };
 
   const isScanning = Boolean(ocrProgress && ocrProgress.stage !== "done" && ocrProgress.stage !== "error");
   const headlineResult = ocrOutcome?.located;
@@ -131,15 +217,25 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   };
 
   const runOcr = async (image: UploadedImageState, useBinarize: boolean) => {
+    if (!downloadedSource) {
+      setImageError("请先选择科目并下载本地题库包，再开始搜题。");
+      return;
+    }
+
     setImageError("");
     setOcrOutcome(null);
     setOcrProgress({ stage: "preprocessing", ratio: 0.05, label: "正在增强图片清晰度…" });
 
     try {
-      const outcome = await locateQuestionFromImage(image.file, componentGroup, {
-        binarize: useBinarize,
-        onProgress: setOcrProgress,
-      });
+      const outcome = await locateQuestionFromImage(
+        image.file,
+        componentGroup,
+        {
+          binarize: useBinarize,
+          onProgress: setOcrProgress,
+        },
+        downloadedSource,
+      );
       setOcrOutcome(outcome);
       setOcrProgress({ stage: "done", ratio: 1, label: "识别完成" });
     } catch (error) {
@@ -157,6 +253,10 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
 
   const handlePhotoSelected = async (file?: File) => {
     if (!file) return;
+    if (!downloadedSource) {
+      setImageError("请先选择科目并下载本地题库包，再上传图片。");
+      return;
+    }
 
     if (uploadedImage?.previewUrl) URL.revokeObjectURL(uploadedImage.previewUrl);
     const previewUrl = URL.createObjectURL(file);
@@ -184,9 +284,19 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   return (
     <main className="question-search-page px-5 pb-28 pt-7">
       <header className="mb-5">
-        <p className="text-sm font-bold text-muted">CAIE Mathematics 9709 · 本地 OCR</p>
-        <h1 className="mt-1 text-3xl font-black tracking-normal text-ink">数学搜题</h1>
+        <p className="text-sm font-bold text-muted">2018+ 本地题库包 · OCR 搜题</p>
+        <h1 className="mt-1 text-3xl font-black tracking-normal text-ink">本地搜题</h1>
       </header>
+
+      <SubjectArchivePanel
+        subjects={archiveSubjects}
+        selectedSubject={selectedArchiveSubject}
+        metas={archiveMetas}
+        onSelect={setSelectedArchiveId}
+        onDownload={handleDownloadArchive}
+        downloadStatus={downloadStatus}
+        downloadError={downloadError}
+      />
 
       <section className="rounded-[30px] bg-white p-2 shadow-soft">
         <div className="grid grid-cols-2 gap-1 rounded-[24px] bg-cream p-1">
@@ -197,7 +307,12 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
 
       {mode === "photo" ? (
         <>
-          <OcrBanner stats={databaseStats} />
+          <OcrBanner
+            stats={databaseStats}
+            subject={selectedArchiveSubject}
+            archiveMeta={selectedArchiveMeta}
+            canSearch={canSearchArchive}
+          />
 
           <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
             <input
@@ -206,12 +321,14 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
               accept="image/*"
               capture="environment"
               className="hidden"
+              disabled={!canSearchArchive}
               onChange={(event) => handlePhotoSelected(event.target.files?.[0])}
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center"
+              disabled={!canSearchArchive}
+              className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               {uploadedImage ? (
                 <span className="grid w-full gap-3">
@@ -227,8 +344,12 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
                   <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-white">
                     <Camera size={24} />
                   </span>
-                  <span className="mt-3 block text-lg font-black text-ink">拍照 / 上传 CIE 数学题目</span>
-                  <span className="mt-1 block text-xs font-bold text-muted">本地识别，图片不会上传服务器</span>
+                  <span className="mt-3 block text-lg font-black text-ink">
+                    {canSearchArchive ? `拍照 / 上传${selectedArchiveSubject?.name ?? ""}题目` : "先下载本地题库包"}
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-muted">
+                    {canSearchArchive ? "本地识别，图片不会上传服务器" : "下载完成后，搜索会直接在本地完成"}
+                  </span>
                 </span>
               )}
             </button>
@@ -264,11 +385,12 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onBlur={saveSearch}
+                disabled={!canSearchArchive}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") saveSearch();
                 }}
-                placeholder="可补充：9709/12/M/J/24 Q3、topic、关键词"
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted"
+                placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、topic、关键词" : "先下载当前科目的本地题库包"}
+                className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
               />
             </div>
 
@@ -309,7 +431,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             </p>
           ) : null}
 
-          {!uploadedImage && query ? (
+          {canSearchArchive && !uploadedImage && query ? (
             <RecognitionPanel signal={searchSignal} resultCount={results.length} topResult={results[0]} />
           ) : null}
 
@@ -367,8 +489,178 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   );
 }
 
+function SubjectArchivePanel({
+  subjects,
+  selectedSubject,
+  metas,
+  onSelect,
+  onDownload,
+  downloadStatus,
+  downloadError,
+}: {
+  subjects: QuestionArchiveSubject[];
+  selectedSubject: QuestionArchiveSubject | null;
+  metas: LocalQuestionArchiveMetaMap;
+  onSelect: (subjectId: string) => void;
+  onDownload: () => void;
+  downloadStatus: ArchiveDownloadStatus;
+  downloadError: string;
+}) {
+  const selectedMeta = selectedSubject ? metas[selectedSubject.id] : undefined;
+  const isDownloading = downloadStatus === "downloading";
+  const canDownload = selectedSubject?.availability === "ready";
+  const buttonLabel = isDownloading
+    ? "正在准备"
+    : selectedMeta
+      ? "更新本地题包"
+      : canDownload
+        ? "下载 2018+ 题目答案"
+        : "等待 database";
+
+  return (
+    <section className="mb-4 rounded-[32px] bg-white p-4 shadow-soft">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-muted">科目题库包</p>
+          <h2 className="mt-1 text-xl font-black text-ink">选择科目后本地搜索</h2>
+        </div>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
+          <Database size={20} />
+        </span>
+      </div>
+
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        {subjects.map((subject) => {
+          const selected = selectedSubject?.id === subject.id;
+          const meta = metas[subject.id];
+
+          return (
+            <button
+              key={subject.id}
+              type="button"
+              onClick={() => onSelect(subject.id)}
+              aria-pressed={selected}
+              className="grid min-w-[142px] gap-2 rounded-[24px] border p-3 text-left transition"
+              style={{
+                backgroundColor: selected ? subject.color : "rgba(255,255,255,0.72)",
+                borderColor: selected ? subject.accent : "rgba(0,0,0,0.06)",
+              }}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="truncate text-sm font-black text-ink">{subject.name}</span>
+                {meta ? <CheckCircle2 size={15} className="shrink-0 text-[#166534]" /> : null}
+              </span>
+              <span className="text-[11px] font-black text-muted">
+                {subject.board} {subject.syllabusCode}
+              </span>
+              <ArchiveStatusPill subject={subject} meta={meta} />
+            </button>
+          );
+        })}
+      </div>
+
+      {selectedSubject ? (
+        <div className="mt-4 rounded-[26px] bg-cream p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-muted">
+                {selectedSubject.board} {selectedSubject.syllabusCode} · {selectedSubject.availabilityLabel}
+              </p>
+              <h3 className="mt-1 truncate text-lg font-black text-ink">{selectedSubject.name}题库</h3>
+              <p className="mt-1 text-xs font-bold leading-5 text-muted">{selectedSubject.description}</p>
+            </div>
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink">
+              <HardDrive size={18} />
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <ArchiveMetric icon={<Layers3 size={14} />} label="范围" value={`${selectedSubject.fromYear}+`} />
+            <ArchiveMetric icon={<FileText size={14} />} label="题目" value={selectedMeta ? `${selectedMeta.questionCount}` : "未下载"} />
+            <ArchiveMetric
+              icon={<BookOpenCheck size={14} />}
+              label="答案"
+              value={selectedMeta ? `${selectedMeta.answerCount}` : "未下载"}
+            />
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onDownload}
+              disabled={!canDownload || isDownloading}
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {buttonLabel}
+            </button>
+            {selectedMeta ? (
+              <span className="text-[11px] font-black text-muted">已保存：{formatArchiveDate(selectedMeta.downloadedAt)}</span>
+            ) : null}
+          </div>
+
+          {downloadError ? (
+            <p className="mt-3 rounded-[18px] bg-white p-3 text-xs font-bold leading-5 text-[#B91C1C]">{downloadError}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function ArchiveStatusPill({ subject, meta }: { subject: QuestionArchiveSubject; meta?: LocalQuestionArchiveMeta }) {
+  if (meta) {
+    return (
+      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-[#166534]">
+        <CheckCircle2 size={12} />
+        已下载
+      </span>
+    );
+  }
+
+  if (subject.availability === "ready") {
+    return (
+      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-ink">
+        <Download size={12} />
+        可下载
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
+      <WifiOff size={12} />
+      待接入
+    </span>
+  );
+}
+
+function ArchiveMetric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] bg-white p-2">
+      <div className="mb-1 flex items-center gap-1 text-[11px] font-black text-muted">
+        {icon}
+        {label}
+      </div>
+      <p className="truncate text-sm font-black text-ink">{value}</p>
+    </div>
+  );
+}
+
+function formatArchiveDate(value: string) {
+  return new Date(value).toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function OcrBanner({
   stats,
+  subject,
+  archiveMeta,
+  canSearch,
 }: {
   stats: {
     questionCount: number;
@@ -377,6 +669,9 @@ function OcrBanner({
     years: number[];
     sourceKind: string;
   };
+  subject: QuestionArchiveSubject | null;
+  archiveMeta?: LocalQuestionArchiveMeta;
+  canSearch: boolean;
 }) {
   const available = isOcrLikelyAvailable();
 
@@ -387,14 +682,24 @@ function OcrBanner({
           <ScanSearch size={20} />
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-black text-muted">本地 OCR 搜题</p>
+          <p className="text-xs font-black text-muted">
+            {subject ? `${subject.name} ${subject.syllabusCode}` : "本地 OCR 搜题"}
+          </p>
           <h2 className="mt-1 text-lg font-black text-ink">
-            拍照 → 识别 → 返回 题目 / 答案 / 卷号
+            {canSearch ? "拍照 → 识别 → 本地匹配题目 / 答案" : "下载题包后启用本地搜索"}
           </h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
-            识别在你的设备本地完成，{stats.questionCount} 个本地种子题。
+            {canSearch
+              ? `识别在你的设备本地完成，当前题包 ${stats.questionCount} 个题目，${archiveMeta?.answerCount ?? 0} 个答案。`
+              : "当前科目还没有可搜索的本地题包。"}
             {available ? "首次使用会下载一次轻量识别模型。" : "当前环境可能不支持本地识别，将回退到关键词搜索。"}
           </p>
+          {canSearch ? (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-muted">
+              <ShieldCheck size={13} />
+              数据源：{stats.sourceKind}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

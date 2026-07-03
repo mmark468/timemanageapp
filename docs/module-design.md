@@ -56,7 +56,7 @@ src/
 | `src/pages/CalendarPage.tsx` | 学习日历，整合任务、课表、考试、假期。 |
 | `src/pages/TimetablePage.tsx` / `SetupTimetablePage.tsx` | 课表设置和课表管理。 |
 | `src/pages/SubjectsPage.tsx` / `SubjectDetailPage.tsx` / `UnitDetailPage.tsx` | 科目、单元、进度管理。 |
-| `src/pages/QuestionSearchPage.tsx` | 搜题页面，只负责上传图片、OCR 状态、筛选、结果展示。 |
+| `src/pages/QuestionSearchPage.tsx` | 搜题页面，只负责科目题包选择、下载状态、上传图片、OCR 状态、筛选、结果展示。 |
 | `src/pages/FocusPage.tsx` | 番茄钟专注。 |
 | `src/components/` | 通用 UI：底部导航、卡片、进度、页面头部等。 |
 | `src/types.ts` | 前端学习计划领域模型。 |
@@ -78,6 +78,7 @@ src/
 | `finished.subjectOverrides` | 考试时间、科目进度等覆盖值 |
 | `finished.pomodoros` / `finished.focusTarget` / `finished.focusSettings` | 番茄钟记录、当前目标和设置 |
 | `finished.questionSearch.recent` | 最近搜题关键词 |
+| `finished.questionSearch.archives.v1` | 已下载题库包的本地 manifest / meta |
 
 边界：
 
@@ -126,6 +127,7 @@ src/features/questionSearch/
   README.md
   types.ts
   cieMathQuestionBank.ts
+  questionArchiveGateway.ts
   textTools.ts
   imageFingerprint.ts
   ocrEngine.ts
@@ -139,6 +141,7 @@ src/features/questionSearch/
 | --- | --- |
 | `types.ts` | 搜题题目、OCR、定位结果、搜索请求/结果类型。 |
 | `cieMathQuestionBank.ts` | 当前 Web 端 CAIE Mathematics 9709 seed 题库。 |
+| `questionArchiveGateway.ts` | 科目题包目录、2018+ 本地下载状态、题包数据源适配器；后续接 database 时优先替换这里。 |
 | `textTools.ts` | 文本标准化、关键词拆分、`9709/12/M/J/24 Q3` 这类 paper reference 解析。 |
 | `imageFingerprint.ts` | 图片 hash，用于 OCR 失败时的近似匹配兜底。 |
 | `ocrEngine.ts` | 浏览器内 OCR，返回文本、置信度、逐行结果和预处理预览。 |
@@ -149,16 +152,24 @@ Web 当前搜题流程：
 
 ```text
 QuestionSearchPage
+  -> 用户选择科目
+  -> questionArchiveGateway 检查 / 下载 2018+ 本地题包
   -> 用户输入关键词或上传图片
   -> createImageFingerprint(file)
-  -> locateQuestionFromImage(file)
+  -> locateQuestionFromImage(file, currentArchiveSource)
        -> recognizeImageText(file)
-       -> locateQuestionFromText(ocrText)
+       -> locateQuestionFromText(ocrText, currentArchiveSource)
             -> extractPaperReferences(text)
-            -> searchCieMathQuestions(request)
+            -> searchCieMathQuestions(request, currentArchiveSource)
   -> 展示 located / candidates / results
   -> 保存 recent searches 到 localStorage
 ```
+
+当前 Web 题包状态：
+
+- 数学 `CAIE 9709`：MVP 内置本地 seed 题包，用户点击下载后会把题包 meta 写入 `localStorage`，搜索直接在浏览器本地完成。
+- 其它已配置科目：页面入口和接口已预留，状态显示为 `待接 database`，避免在真实题库未接入前误导用户。
+- 后续如果要实现“2018 年以后完整题目和答案下载”，优先让 `questionArchiveGateway.ts` 从后端 manifest / IndexedDB / Cache Storage 获取数据，再返回统一的 `QuestionSearchDataSource`。
 
 当前搜索信号：
 

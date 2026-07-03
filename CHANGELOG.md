@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## 2026-07-03 - 搜题页改为科目题包下载后本地搜索
+
+### 本次修改内容
+
+- 将搜题页从单一“数学搜题”改为“选择科目 -> 下载 2018+ 本地题包 -> 本地搜索”的阶段性 MVP 流程。
+- 新增题库包 gateway，统一管理科目题包目录、下载状态、本地 meta 和未来 database 数据源适配点。
+- 保留原有数学 9709 OCR、关键词、Paper 筛选和答案展示逻辑；下载数学题包后才启用搜索。
+- 其它已配置科目显示为 `待接 database`，先保留入口，不伪造未接入的完整题库。
+- 更新模块设计文档和搜题模块 README，说明新增边界和后续接 database 的位置。
+- 已运行 `npm run build` 和 `npm run build:vite`，构建与 TypeScript 检查成功。
+
+### 修改文件
+
+- `src/pages/QuestionSearchPage.tsx`
+- `src/features/questionSearch/questionArchiveGateway.ts`
+- `src/features/questionSearch/questionLocator.ts`
+- `src/features/questionSearch/README.md`
+- `docs/module-design.md`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：有影响。搜题页新增科目题包选择、下载状态、下载按钮和未下载禁用态。
+- 数据结构：有影响。新增 `finished.questionSearch.archives.v1` localStorage key，用于保存本地题包 meta / manifest。
+- 接口：有影响。`locateQuestionFromText` 和 `locateQuestionFromImage` 新增可选 `QuestionSearchDataSource` 参数；新增 `questionArchiveGateway.ts` 作为未来 database / 本地缓存适配接口。
+- 依赖：无影响，未修改 `package.json` 或 `package-lock.json`。
+
+### 潜在风险
+
+- 当前只有 CAIE 数学 9709 使用内置 seed 题包，并不等于已经下载完整 2018 年以后官方全量题库。
+- 其它科目需要后续把真实 database manifest、IndexedDB 或 Cache Storage 接到 `questionArchiveGateway.ts` 后才能搜索。
+- 新增 localStorage key 后，如果用户清理浏览器数据，需要重新点击下载题包。
+- GitHub Pages 可能有短缓存，手机端可能需要刷新或等待几分钟才看到新版。
+
+### 建议 commit message
+
+```text
+feat: add subject archive flow for local question search
+```
+
 ## 2026-07-02 - 最终采用 gh-pages 分支发布
 
 ### 本次修改内容

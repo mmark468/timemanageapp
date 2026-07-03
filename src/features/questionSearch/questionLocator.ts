@@ -1,5 +1,5 @@
 import { recognizeImageText, type RecognizeOptions } from "./ocrEngine";
-import { localCieMathQuestionSource, searchCieMathQuestions } from "./questionSearchEngine";
+import { localCieMathQuestionSource, searchCieMathQuestions, type QuestionSearchDataSource } from "./questionSearchEngine";
 import { extractPaperReferences } from "./textTools";
 import type {
   CieMathComponentGroup,
@@ -44,11 +44,12 @@ function toLocatedQuestion(question: CieMathQuestion, score: number, matchReason
 export function locateQuestionFromText(
   text: string,
   componentGroup: CieMathComponentGroup = "all",
+  source: QuestionSearchDataSource = localCieMathQuestionSource,
 ): Omit<QuestionOcrOutcome, "ocr"> {
   const paperRefs = extractPaperReferences(text);
   const results = searchCieMathQuestions(
     { query: text, componentGroup },
-    localCieMathQuestionSource,
+    source,
   );
 
   const candidates = results
@@ -70,11 +71,12 @@ export async function locateQuestionFromImage(
   file: File,
   componentGroup: CieMathComponentGroup = "all",
   options: RecognizeOptions = {},
+  source: QuestionSearchDataSource = localCieMathQuestionSource,
 ): Promise<QuestionOcrOutcome> {
   const ocr = await recognizeImageText(file, options);
   // OCR 文本之外，文件名往往也含 9709/12/M/J/24 这类线索，一并喂给定位算法。
   const combinedText = [ocr.text, ...ocr.lines].join("\n");
-  const located = locateQuestionFromText(combinedText, componentGroup);
+  const located = locateQuestionFromText(combinedText, componentGroup, source);
 
   return { ocr, ...located };
 }
