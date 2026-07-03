@@ -9,6 +9,7 @@ const assetsDir = path.join(distDir, "assets");
 const cssOutputPath = path.join(assetsDir, "time-planning-preview.css");
 const jsOutputPath = path.join(assetsDir, "time-planning-preview.js");
 const htmlOutputPath = path.join(distDir, "index.html");
+const assetVersion = process.env.PREVIEW_ASSET_VERSION ?? String(Date.now());
 
 const ignoreCssImports = {
   name: "ignore-css-imports",
@@ -72,11 +73,11 @@ const html = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F6F8FB" />
     <title>时间规划</title>
-    <link rel="stylesheet" href="./assets/time-planning-preview.css" />
+    <link rel="stylesheet" href="./assets/time-planning-preview.css?v=${assetVersion}" />
   </head>
   <body>
     <div id="root"></div>
-    <script src="./assets/time-planning-preview.js"></script>
+    <script src="./assets/time-planning-preview.js?v=${assetVersion}"></script>
   </body>
 </html>
 `;

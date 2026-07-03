@@ -12,6 +12,7 @@
 - 科目页电脑端改为左侧新增科目、右侧科目卡片网格。
 - 课表页电脑端改为左侧模式控制、中间课程/星期管理、右侧时间线或编辑器。
 - 设置页电脑端改为个人信息、显示模式、课程范围横向分区。
+- GitHub Pages 预览构建新增 CSS/JS 版本参数，避免部署后浏览器或 CDN 继续读取旧样式。
 - 已运行 `npm run build:vite`、`npm run build` 和 `git diff --check`，均通过。
 
 ### 修改文件
@@ -22,6 +23,7 @@
 - `src/pages/SubjectsPage.tsx`
 - `src/pages/TimetablePage.tsx`
 - `src/styles.css`
+- `scripts/build-preview.mjs`
 - `CHANGELOG.md`
 
 ### 影响范围
@@ -29,7 +31,7 @@
 - 页面样式：有影响。主要影响 1024px 以上电脑端布局；移动端仍保留原来的纵向手机体验。
 - 数据结构：无影响，未新增或修改 localStorage key。
 - 接口：有轻微影响。新增页面级布局 wrapper/class，未修改业务 props、题库数据结构或后端接口。
-- 依赖：无影响，未修改 npm 依赖。
+- 依赖：无影响，未修改 npm 依赖；预览构建脚本会给静态资源 URL 加版本参数。
 
 ### 潜在风险
 
