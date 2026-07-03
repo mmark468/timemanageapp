@@ -1756,12 +1756,12 @@ button:disabled {
     min-height: calc(100vh - 48px);
   }
 
-  .lg\:w-\[calc\(100vw-160px\)\] {
-    width: calc(100vw - 160px);
+  .lg\:w-\[calc\(100vw-148px\)\] {
+    width: calc(100vw - 148px);
   }
 
-  .lg\:max-w-\[1320px\] {
-    max-width: 1320px;
+  .lg\:max-w-\[1680px\] {
+    max-width: 1680px;
   }
 
   .lg\:rounded-\[34px\] {
@@ -2437,6 +2437,376 @@ body.theme-dark {
   .today-focus-card {
     grid-column: 3;
     grid-row: 3 / span 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-responsive-frame {
+    width: min(1680px, calc(100vw - 148px)) !important;
+    max-width: 1680px !important;
+    border-radius: 28px !important;
+  }
+
+  .app-responsive-frame .page-enter {
+    overflow: hidden;
+  }
+
+  .app-responsive-frame[data-desktop-route="today"] .today-page,
+  .app-responsive-frame[data-desktop-route="calendar"] .calendar-page,
+  .app-responsive-frame[data-desktop-route="subjects"] .subjects-page,
+  .app-responsive-frame[data-desktop-route="timetable"] .timetable-page,
+  .app-responsive-frame[data-desktop-route="questionSearch"] .question-search-page,
+  .app-responsive-frame[data-desktop-route="settings"] .settings-page {
+    height: calc(100vh - 48px);
+    min-height: 720px;
+    overflow: hidden;
+  }
+
+  .today-page {
+    grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.35fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .today-page > header,
+  .today-quick-stats {
+    grid-column: 1 / -1;
+  }
+
+  .today-search-card {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .today-exam-card {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .today-focus-card {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .today-schedule-card {
+    grid-column: 2;
+    grid-row: 3 / span 5;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .today-schedule-card .space-y-3 {
+    max-height: calc(100vh - 318px);
+    overflow-y: auto;
+  }
+
+  .question-search-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .question-search-page > header {
+    grid-column: auto;
+  }
+
+  .question-search-workspace {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(260px, 300px) minmax(380px, 1.2fr) minmax(320px, 0.9fr);
+    gap: 16px;
+  }
+
+  .question-search-sidebar,
+  .question-search-library-column,
+  .question-search-tool-column,
+  .question-search-mistakes-column {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .question-search-sidebar,
+  .question-search-library-column,
+  .question-search-tool-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .question-search-page > section,
+  .question-search-page > div,
+  .question-search-page > p,
+  .question-search-library-column > section,
+  .question-search-tool-column > section,
+  .question-search-tool-column > p,
+  .subject-archive-panel,
+  .question-mode-panel,
+  .question-upload-card,
+  .question-recent-searches,
+  .question-results-panel,
+  .math-paper-browser {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .subject-archive-list {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    overflow: visible !important;
+  }
+
+  .subject-archive-list > button {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .subject-archive-detail {
+    max-height: none;
+  }
+
+  .question-mode-panel > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .math-paper-browser {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(190px, 230px) minmax(0, 1fr);
+    grid-template-areas:
+      "header papers"
+      "metrics papers"
+      "years papers"
+      "sessions papers";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .math-paper-browser-header {
+    grid-area: header;
+    margin-bottom: 0 !important;
+  }
+
+  .math-paper-metrics {
+    grid-area: metrics;
+    grid-template-columns: 1fr !important;
+  }
+
+  .math-paper-year-strip {
+    grid-area: years;
+    display: grid !important;
+    max-height: 172px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-y: auto !important;
+  }
+
+  .math-paper-year-strip > button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .math-paper-session-grid {
+    grid-area: sessions;
+    grid-template-columns: 1fr !important;
+    max-height: 210px;
+    overflow-y: auto;
+  }
+
+  .math-paper-session-panel {
+    grid-area: papers;
+    min-height: 0;
+    max-height: calc(100vh - 238px);
+    overflow: hidden;
+    margin-top: 0 !important;
+  }
+
+  .math-paper-list {
+    max-height: calc(100vh - 352px);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .calendar-desktop-grid {
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(260px, 320px) minmax(420px, 1fr) minmax(280px, 360px);
+    grid-template-areas:
+      "overview gantt detail"
+      "month gantt detail";
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .calendar-gantt-card {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .calendar-detail-card {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .calendar-date-pill {
+    min-width: 72px !important;
+  }
+
+  .subjects-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .subjects-page > header {
+    margin-bottom: 0 !important;
+  }
+
+  .subjects-management-layout {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .subjects-add-panel {
+    height: fit-content;
+    margin-bottom: 0 !important;
+  }
+
+  .subjects-grid {
+    min-height: 0;
+    overflow-y: auto;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    align-content: start;
+    padding-right: 2px;
+  }
+
+  .timetable-page {
+    display: grid;
+    grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+    grid-template-areas:
+      "header header"
+      "control body";
+  }
+
+  .timetable-page > header {
+    grid-area: header;
+    margin-bottom: 0 !important;
+  }
+
+  .timetable-control-panel {
+    grid-area: control;
+    align-self: start;
+  }
+
+  .timetable-school-workspace,
+  .timetable-editor-workspace {
+    grid-area: body;
+    display: grid;
+    min-height: 0;
+    gap: 16px;
+    margin-top: 0 !important;
+  }
+
+  .timetable-school-workspace {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .timetable-course-list {
+    grid-row: 1 / span 2;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .timetable-day-tabs {
+    grid-column: 2;
+    margin: 0 !important;
+  }
+
+  .timetable-day-panel {
+    grid-column: 2;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .timetable-editor-workspace {
+    grid-template-columns: minmax(420px, 1.2fr) minmax(320px, 0.8fr);
+    overflow: hidden;
+  }
+
+  .timetable-batch-editor,
+  .timetable-single-editor {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .settings-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .settings-page > header {
+    margin-bottom: 0 !important;
+  }
+
+  .settings-workspace {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(320px, 1fr) minmax(320px, 1fr);
+    grid-auto-rows: min-content;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .settings-workspace > section,
+  .settings-save-button {
+    margin-top: 0 !important;
+  }
+
+  .settings-save-button {
+    grid-column: 1 / -1;
+    max-width: 420px;
+    justify-self: end;
+  }
+}
+
+@media (min-width: 1280px) {
+  .today-page {
+    grid-template-columns: minmax(280px, 330px) minmax(420px, 1fr) minmax(300px, 380px);
+  }
+
+  .today-page > header,
+  .today-quick-stats {
+    grid-column: 1 / -1;
+  }
+
+  .today-search-card,
+  .today-exam-card {
+    grid-column: 1;
+  }
+
+  .today-schedule-card {
+    grid-column: 2;
+    grid-row: 3 / span 4;
+  }
+
+  .today-focus-card {
+    grid-column: 3;
+    grid-row: 3 / span 2;
+  }
+}
+
+@media (min-width: 1440px) {
+  .question-search-workspace {
+    grid-template-columns: minmax(280px, 320px) minmax(520px, 1.35fr) minmax(360px, 0.85fr);
   }
 }
 /* preview-custom-end */
