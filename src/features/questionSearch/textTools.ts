@@ -86,10 +86,10 @@ function extractQuestionNumber(value: string): string | undefined {
 }
 
 function extractComponentCode(value: string): string | undefined {
-  const slashReference = value.match(/\b9709\s*[/_\-]?\s*([1-6][0-9])\b/);
+  const slashReference = value.match(/\b9709\s*[/_\-]?\s*([1-7][0-9])\b/);
   if (slashReference?.[1]) return slashReference[1];
 
-  const componentReference = value.match(/\b(?:paper|p|component)\s*([1-6][0-9]?)\b/);
+  const componentReference = value.match(/\b(?:paper|p|component)\s*([1-7][0-9]?)\b/);
   const rawComponent = componentReference?.[1];
   if (!rawComponent) return undefined;
 

@@ -2,6 +2,7 @@ import {
   AlertCircle,
   BookOpenCheck,
   Camera,
+  CalendarDays,
   CheckCircle2,
   ChevronDown,
   Clock3,
@@ -9,6 +10,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FolderOpen,
   Hash,
   HardDrive,
   Layers3,
@@ -39,15 +41,19 @@ import {
   buildQuestionArchiveSubjects,
   downloadQuestionArchive,
   getDownloadedQuestionArchiveSource,
-  getQuestionArchiveSource,
   readQuestionArchiveMetas,
   type LocalQuestionArchiveMeta,
   type LocalQuestionArchiveMetaMap,
   type QuestionArchiveSubject,
 } from "../features/questionSearch/questionArchiveGateway";
+import {
+  math9709PaperDatabase,
+  math9709PaperDatabaseSourceUrl,
+  math9709PaperDatabaseStats,
+  type Math9709PaperResource,
+  type Math9709SeriesCode,
+} from "../features/questionSearch/math9709PaperDatabase";
 import type {
-  CieMathQuestion,
-  CiePaperLink,
   CieMathComponentGroup,
   ImageFingerprint,
   LocatedQuestion,
@@ -71,17 +77,19 @@ interface UploadedImageState {
   fingerprint?: ImageFingerprint;
 }
 
-interface MathPaperArchiveItem {
-  id: string;
-  paperCode: string;
-  paperLabel: string;
-  componentCode: string;
-  series: CieMathQuestion["series"];
+interface MathPaperYearGroup {
   year: number;
-  questionCount: number;
-  topics: string[];
-  questionPdf: CiePaperLink;
-  markSchemePdf: CiePaperLink;
+  papers: Math9709PaperResource[];
+  sessions: MathPaperSessionGroup[];
+}
+
+interface MathPaperSessionGroup {
+  id: string;
+  year: number;
+  seriesCode: Math9709SeriesCode;
+  seriesName: Math9709PaperResource["seriesName"];
+  sessionLabel: string;
+  papers: Math9709PaperResource[];
 }
 
 const recentKey = "finished.questionSearch.recent";
@@ -122,11 +130,8 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
     () => getDownloadedQuestionArchiveSource(selectedArchiveSubject, selectedArchiveMeta),
     [selectedArchiveMeta, selectedArchiveSubject],
   );
-  const selectedArchiveSource = useMemo(() => getQuestionArchiveSource(selectedArchiveSubject), [selectedArchiveSubject]);
-  const mathPaperArchive = useMemo(
-    () => buildMathPaperArchive(selectedArchiveSource?.questions ?? []),
-    [selectedArchiveSource?.questions],
-  );
+  const mathPaperArchive =
+    selectedArchiveSubject?.board === "CAIE" && selectedArchiveSubject.syllabusCode === "9709" ? math9709PaperDatabase : [];
   const canSearchArchive = Boolean(downloadedSource);
   const databaseStats = useMemo(
     () =>
@@ -335,7 +340,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             canSearch={canSearchArchive}
           />
 
-          {mathPaperArchive.length > 0 ? <MathPaperLibrary papers={mathPaperArchive} canSearch={canSearchArchive} /> : null}
+          {mathPaperArchive.length > 0 ? <MathPaperBrowser papers={mathPaperArchive} canSearch={canSearchArchive} /> : null}
 
           <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
             <input
@@ -512,96 +517,206 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   );
 }
 
-function buildMathPaperArchive(questions: CieMathQuestion[]): MathPaperArchiveItem[] {
-  const papers = new Map<string, MathPaperArchiveItem>();
+function buildMathPaperYearGroups(papers: Math9709PaperResource[]): MathPaperYearGroup[] {
+  const yearMap = new Map<number, Math9709PaperResource[]>();
 
-  for (const question of questions) {
-    const id = `${question.syllabusCode}-${question.year}-${question.series}-${question.componentCode}`;
-    const current = papers.get(id);
-
-    if (current) {
-      current.questionCount += 1;
-      current.topics = Array.from(new Set([...current.topics, question.topic])).slice(0, 4);
-      continue;
-    }
-
-    papers.set(id, {
-      id,
-      paperCode: formatMathPaperCode(question),
-      paperLabel: question.paperLabel,
-      componentCode: question.componentCode,
-      series: question.series,
-      year: question.year,
-      questionCount: 1,
-      topics: [question.topic],
-      questionPdf: question.questionPdf,
-      markSchemePdf: question.markSchemePdf,
-    });
+  for (const paper of papers) {
+    yearMap.set(paper.year, [...(yearMap.get(paper.year) ?? []), paper]);
   }
 
-  return Array.from(papers.values()).sort(
-    (left, right) =>
-      right.year - left.year ||
-      seriesSortValue(left.series) - seriesSortValue(right.series) ||
-      Number(left.componentCode) - Number(right.componentCode),
-  );
+  return Array.from(yearMap.entries())
+    .map(([year, yearPapers]) => {
+      const sessionMap = new Map<string, Math9709PaperResource[]>();
+
+      for (const paper of yearPapers) {
+        const id = `${paper.year}-${paper.seriesCode}`;
+        sessionMap.set(id, [...(sessionMap.get(id) ?? []), paper]);
+      }
+
+      const sessions = Array.from(sessionMap.entries())
+        .map(([id, sessionPapers]) => {
+          const firstPaper = sessionPapers[0];
+          return {
+            id,
+            year,
+            seriesCode: firstPaper.seriesCode,
+            seriesName: firstPaper.seriesName,
+            sessionLabel: firstPaper.sessionLabel,
+            papers: sortMathPapers(sessionPapers),
+          } satisfies MathPaperSessionGroup;
+        })
+        .sort((left, right) => mathSeriesSortValue(left.seriesCode) - mathSeriesSortValue(right.seriesCode));
+
+      return {
+        year,
+        papers: sortMathPapers(yearPapers),
+        sessions,
+      } satisfies MathPaperYearGroup;
+    })
+    .sort((left, right) => right.year - left.year);
 }
 
-function MathPaperLibrary({ papers, canSearch }: { papers: MathPaperArchiveItem[]; canSearch: boolean }) {
+function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource[]; canSearch: boolean }) {
+  const groups = useMemo(() => buildMathPaperYearGroups(papers), [papers]);
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(() => groups[0]?.year);
+  const selectedYearGroup = groups.find((group) => group.year === selectedYear) ?? groups[0];
+  const [selectedSessionId, setSelectedSessionId] = useState(() => selectedYearGroup?.sessions[0]?.id ?? "");
+  const selectedSession =
+    selectedYearGroup?.sessions.find((session) => session.id === selectedSessionId) ?? selectedYearGroup?.sessions[0];
+
+  useEffect(() => {
+    if (!groups.length) return;
+    if (!selectedYear || !groups.some((group) => group.year === selectedYear)) {
+      setSelectedYear(groups[0].year);
+    }
+  }, [groups, selectedYear]);
+
+  useEffect(() => {
+    if (!selectedYearGroup?.sessions.length) return;
+    if (!selectedSessionId || !selectedYearGroup.sessions.some((session) => session.id === selectedSessionId)) {
+      setSelectedSessionId(selectedYearGroup.sessions[0].id);
+    }
+  }, [selectedSessionId, selectedYearGroup]);
+
   return (
     <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-muted">数学题库</p>
-          <h2 className="mt-1 text-xl font-black text-ink">卷号和 Mark Scheme</h2>
+          <p className="text-xs font-black text-muted">数学 9709 database</p>
+          <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找 QP 和 MS</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
-            {canSearch ? "已下载本地题包，可直接搜索或打开原卷。" : "先浏览卷号；下载题包后可在本地搜索题目。"}
+            {canSearch ? "本地索引已启用；也可以直接按文件夹打开对应卷号。" : "先浏览数据库；下载题包后可用卷号和文件名本地搜索。"}
           </p>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
-          <BookOpenCheck size={19} />
+          <FolderOpen size={19} />
         </span>
       </div>
 
-      <div className="grid gap-2">
-        {papers.map((paper) => (
-          <article key={paper.id} className="grid gap-3 rounded-[24px] bg-cream p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-lg font-black leading-6 text-ink">{paper.paperCode}</p>
-                <p className="mt-1 truncate text-xs font-black text-muted">{paper.paperLabel}</p>
-              </div>
-              <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-muted">
-                {paper.questionCount} 题
-              </span>
-            </div>
+      <div className="grid grid-cols-3 gap-2">
+        <ArchiveMetric icon={<CalendarDays size={14} />} label="月份" value={`${math9709PaperDatabaseStats.sessionCount}`} />
+        <ArchiveMetric icon={<FileText size={14} />} label="QP" value={`${math9709PaperDatabaseStats.questionPaperCount}`} />
+        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="MS" value={`${math9709PaperDatabaseStats.markSchemeCount}`} />
+      </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {paper.topics.map((topic) => (
-                <span key={topic} className="rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
-                  {topic}
-                </span>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <PaperQuickLink icon={<FileText size={14} />} label="QP" url={paper.questionPdf.url} />
-              <PaperQuickLink icon={<BookOpenCheck size={14} />} label="MS" url={paper.markSchemePdf.url} />
-            </div>
-          </article>
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        {groups.map((group) => (
+          <button
+            key={group.year}
+            type="button"
+            onClick={() => {
+              setSelectedYear(group.year);
+              setSelectedSessionId(group.sessions[0]?.id ?? "");
+            }}
+            className={`shrink-0 rounded-full px-3 py-2 text-xs font-black transition ${
+              selectedYearGroup?.year === group.year ? "bg-ink text-white" : "bg-cream text-ink"
+            }`}
+          >
+            {group.year}
+          </button>
         ))}
       </div>
+
+      {selectedYearGroup ? (
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {selectedYearGroup.sessions.map((session) => {
+            const selected = selectedSession?.id === session.id;
+
+            return (
+              <button
+                key={session.id}
+                type="button"
+                onClick={() => setSelectedSessionId(session.id)}
+                className={`flex items-center justify-between gap-3 rounded-[22px] p-3 text-left transition ${
+                  selected ? "bg-[#E8F0E6] text-ink" : "bg-cream text-ink"
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <FolderOpen size={17} className="shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black">{session.sessionLabel}</span>
+                    <span className="block text-[11px] font-black text-muted">{session.seriesName}</span>
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
+                  {session.papers.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {selectedSession ? (
+        <div className="mt-4 rounded-[26px] bg-cream p-3">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-muted">{selectedYearGroup?.year} · {selectedSession.seriesName}</p>
+              <h3 className="mt-1 text-lg font-black text-ink">{selectedSession.sessionLabel} 文件夹</h3>
+            </div>
+            <a
+              href={selectedSession.papers[0]?.sourcePageUrl ?? math9709PaperDatabaseSourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-black text-ink"
+            >
+              来源
+              <ExternalLink size={12} />
+            </a>
+          </div>
+
+          <div className="grid gap-2">
+            {selectedSession.papers.map((paper) => (
+              <article key={paper.id} className="grid gap-3 rounded-[22px] bg-white p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-base font-black leading-6 text-ink">{formatMathPaperResourceCode(paper)}</p>
+                    <p className="mt-1 truncate text-xs font-black text-muted">{paper.paperLabel}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-cream px-2.5 py-1 text-[11px] font-black text-muted">
+                    Paper {paper.componentCode}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <PaperQuickLink icon={<FileText size={14} />} label="QP" link={paper.questionPaper} />
+                  <PaperQuickLink icon={<BookOpenCheck size={14} />} label="MS" link={paper.markScheme} />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function PaperQuickLink({ icon, label, url }: { icon: ReactNode; label: string; url: string }) {
+function PaperQuickLink({
+  icon,
+  label,
+  link,
+}: {
+  icon: ReactNode;
+  label: string;
+  link?: Math9709PaperResource["questionPaper"];
+}) {
+  if (!link) {
+    return (
+      <span className="flex h-10 items-center justify-center gap-2 rounded-full bg-cream text-xs font-black text-muted">
+        {icon}
+        {label}
+      </span>
+    );
+  }
+
   return (
     <a
-      href={url}
+      href={link.url}
       target="_blank"
       rel="noreferrer"
+      download={link.fileName}
       className="flex h-10 items-center justify-center gap-2 rounded-full bg-ink text-xs font-black text-white"
+      title={link.fileName}
     >
       {icon}
       {label}
@@ -610,23 +725,25 @@ function PaperQuickLink({ icon, label, url }: { icon: ReactNode; label: string; 
   );
 }
 
-function formatMathPaperCode(question: CieMathQuestion) {
-  const yearShort = String(question.year).slice(-2);
-  return `${question.syllabusCode}/${question.componentCode}/${seriesShortCode(question.series)}/${yearShort}`;
+function sortMathPapers(papers: Math9709PaperResource[]) {
+  return [...papers].sort((left, right) => Number(left.componentCode) - Number(right.componentCode));
 }
 
-function seriesShortCode(series: CieMathQuestion["series"]) {
-  if (series === "February/March") return "F/M";
-  if (series === "October/November") return "O/N";
-  if (series === "Specimen") return "SP";
+function formatMathPaperResourceCode(paper: Math9709PaperResource) {
+  const yearShort = String(paper.year).slice(-2);
+  return `${paper.syllabusCode}/${paper.componentCode}/${seriesShortCodeFromSeriesCode(paper.seriesCode)}/${yearShort}`;
+}
+
+function seriesShortCodeFromSeriesCode(seriesCode: Math9709SeriesCode) {
+  if (seriesCode === "m") return "F/M";
+  if (seriesCode === "w") return "O/N";
   return "M/J";
 }
 
-function seriesSortValue(series: CieMathQuestion["series"]) {
-  if (series === "February/March") return 1;
-  if (series === "May/June") return 2;
-  if (series === "October/November") return 3;
-  return 4;
+function mathSeriesSortValue(seriesCode: Math9709SeriesCode) {
+  if (seriesCode === "m") return 1;
+  if (seriesCode === "s") return 2;
+  return 3;
 }
 
 function SubjectArchivePanel({

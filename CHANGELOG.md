@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## 2026-07-03 - 完成数学 9709 年份/月分层题库 database
+
+### 本次修改内容
+
+- 搜题页数学题库不再按一个个卷子平铺，改为“年份 -> 考试月份文件夹 -> 卷号 -> QP/MS”的分层浏览。
+- 新增数学 9709 公开归档索引生成脚本，从 2018 年以后抓取并配对 Question Paper 和 Mark Scheme。
+- 生成并接入数学 9709 paper-level database：23 个考试月份、342 份 QP、342 份 MS，所有条目均已配对。
+- 下载题包统计改为显示完整 QP/MS database 数量，并自动迁移旧的 16 题 seed 下载状态。
+- 搜索源新增 paper-level 索引，输入卷号、年份、月份、文件名时可在本地命中对应 QP/MS；原有演示细题搜索继续保留。
+- 已运行 `npm run build:vite`、`npm run build` 和数据完整性检查，构建成功且缺失 QP/MS 配对数为 0。
+
+### 修改文件
+
+- `src/pages/QuestionSearchPage.tsx`
+- `src/features/questionSearch/math9709PaperDatabase.ts`
+- `src/features/questionSearch/math9709QuestionSource.ts`
+- `src/features/questionSearch/questionArchiveGateway.ts`
+- `src/features/questionSearch/questionSearchEngine.ts`
+- `src/features/questionSearch/textTools.ts`
+- `src/features/questionSearch/README.md`
+- `scripts/cie-math/buildPapaCambridge9709Database.mjs`
+- `content/cie-math/README.md`
+- `package.json`
+- `CHANGELOG.md`
+
+### 影响范围
+
+- 页面样式：有影响。数学题库区域改成年份按钮、月份文件夹和卷号列表。
+- 数据结构：有影响。新增生成型数学 9709 paper database，并迁移旧本地题包 meta 显示为完整 QP/MS 数量。
+- 接口：有影响。`QuestionSearchDataSource.kind` 新增 `bundled-database`，题库 gateway 改为返回 paper-level 搜索源。
+- 依赖：无影响，未新增 npm 依赖；`package.json` 仅新增数据库生成脚本命令。
+
+### 潜在风险
+
+- PDF 链接来自公开归档源 PapaCambridge，不是 Cambridge 官方页面直接公开的完整下载列表；若第三方源改版，需要重新运行或修正生成脚本。
+- 当前 database 是完整 QP/MS PDF 索引，不是每份 PDF 的逐题 OCR 文本索引；拍照搜具体题目的深度匹配仍依赖现有 seed 细题和后续后端 database。
+- 前端 bundle 变大，Vite 提示超过 500KB；目前构建可用，后续可用懒加载拆分题库数据。
+
+### 建议 commit message
+
+```text
+feat: add complete math 9709 paper database browser
+```
+
 ## 2026-07-03 - 合并今日安排并补充数学题库卷号入口
 
 ### 本次修改内容

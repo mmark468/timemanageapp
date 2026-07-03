@@ -10,6 +10,7 @@
     "export:html": "npm run build && node scripts/export-single-html.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "cie:math:fetch-official": "node scripts/cie-math/fetchOfficial9709.mjs",
+    "cie:math:build-papacambridge": "node scripts/cie-math/buildPapaCambridge9709Database.mjs",
     "cie:math:build-manifest": "node scripts/cie-math/buildLocalManifest.mjs",
     "caie:init-db": "python3 -m backend.caie_papers.cli init-db",
     "caie:fetch-official": "python3 -m backend.caie_papers.cli fetch-official",

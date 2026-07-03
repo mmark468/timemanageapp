@@ -6,7 +6,7 @@ import type { CieMathQuestion, QuestionSearchRequest, QuestionSearchResult, Ques
 const SCORE_LIMIT = 99;
 
 export interface QuestionSearchDataSource {
-  kind: "local-seed" | "remote-database";
+  kind: "local-seed" | "bundled-database" | "remote-database";
   questions: CieMathQuestion[];
 }
 
