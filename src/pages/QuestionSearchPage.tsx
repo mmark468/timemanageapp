@@ -617,7 +617,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
       </div>
 
       {selectedYearGroup ? (
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-3 gap-2">
           {selectedYearGroup.sessions.map((session) => {
             const selected = selectedSession?.id === session.id;
 
@@ -626,20 +626,11 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
                 key={session.id}
                 type="button"
                 onClick={() => setSelectedSessionId(session.id)}
-                className={`flex items-center justify-between gap-3 rounded-[22px] p-3 text-left transition ${
-                  selected ? "bg-[#E8F0E6] text-ink" : "bg-cream text-ink"
+                className={`min-h-11 rounded-full px-3 text-center text-xs font-black transition ${
+                  selected ? "bg-ink text-white shadow-pill" : "bg-cream text-ink"
                 }`}
               >
-                <span className="flex min-w-0 items-center gap-2">
-                  <FolderOpen size={17} className="shrink-0" />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-black">{session.sessionLabel}</span>
-                    <span className="block text-[11px] font-black text-muted">{session.seriesName}</span>
-                  </span>
-                </span>
-                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
-                  {session.papers.length}
-                </span>
+                {session.sessionLabel}
               </button>
             );
           })}
@@ -650,8 +641,8 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
         <div className="mt-4 rounded-[26px] bg-cream p-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-black text-muted">{selectedYearGroup?.year} · {selectedSession.seriesName}</p>
-              <h3 className="mt-1 text-lg font-black text-ink">{selectedSession.sessionLabel} 文件夹</h3>
+              <p className="text-xs font-black text-muted">{selectedYearGroup?.year}</p>
+              <h3 className="mt-1 text-lg font-black text-ink">{selectedSession.sessionLabel}</h3>
             </div>
             <a
               href={selectedSession.papers[0]?.sourcePageUrl ?? math9709PaperDatabaseSourceUrl}
