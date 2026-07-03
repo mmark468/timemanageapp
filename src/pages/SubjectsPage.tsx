@@ -26,7 +26,8 @@ export function SubjectsPage({ subjects, sessions, onOpenSubject, onAddSubject }
     <main className="subjects-page px-5 pb-28 pt-7">
       <PageHeader title="我的科目" subtitle="点进科目后调整单元学习和刷题进度。" />
 
-      <section className="mb-4 rounded-[24px] bg-white p-3 shadow-soft">
+      <div className="subjects-management-layout">
+      <section className="subjects-add-panel mb-4 rounded-[24px] bg-white p-3 shadow-soft">
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <input
             value={subjectName}
@@ -104,6 +105,7 @@ export function SubjectsPage({ subjects, sessions, onOpenSubject, onAddSubject }
             还没有科目，先添加一个自定义科目。
           </div>
         ) : null}
+      </div>
       </div>
     </main>
   );

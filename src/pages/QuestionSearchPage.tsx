@@ -314,204 +314,214 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
         <h1 className="mt-1 text-3xl font-black tracking-normal text-ink">搜题</h1>
       </header>
 
-      <SubjectArchivePanel
-        subjects={archiveSubjects}
-        selectedSubject={selectedArchiveSubject}
-        metas={archiveMetas}
-        onSelect={setSelectedArchiveId}
-        onDownload={handleDownloadArchive}
-        downloadStatus={downloadStatus}
-        downloadError={downloadError}
-      />
-
-      <section className="rounded-[30px] bg-white p-2 shadow-soft">
-        <div className="grid grid-cols-2 gap-1 rounded-[24px] bg-cream p-1">
-          <ModeButton active={mode === "photo"} icon={<Camera size={16} />} label="图片搜题" onClick={() => setMode("photo")} />
-          <ModeButton active={mode === "mistakes"} icon={<NotebookTabs size={16} />} label="错题总结" onClick={() => setMode("mistakes")} />
-        </div>
-      </section>
-
-      {mode === "photo" ? (
-        <>
-          <OcrBanner
-            stats={databaseStats}
-            subject={selectedArchiveSubject}
-            archiveMeta={selectedArchiveMeta}
-            canSearch={canSearchArchive}
+      <div className="question-search-workspace">
+        <aside className="question-search-sidebar">
+          <SubjectArchivePanel
+            subjects={archiveSubjects}
+            selectedSubject={selectedArchiveSubject}
+            metas={archiveMetas}
+            onSelect={setSelectedArchiveId}
+            onDownload={handleDownloadArchive}
+            downloadStatus={downloadStatus}
+            downloadError={downloadError}
           />
 
-          {selectedSubjectHasPaperBrowser ? (
-            <MathPaperBrowser papers={mathPaperArchive} canSearch={canSearchArchive} />
-          ) : selectedArchiveSubject ? (
-            <PlannedPaperBrowser subject={selectedArchiveSubject} />
-          ) : null}
-
-          <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              disabled={!canSearchArchive}
-              onChange={(event) => handlePhotoSelected(event.target.files?.[0])}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!canSearchArchive}
-              className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {uploadedImage ? (
-                <span className="grid w-full gap-3">
-                  <img
-                    src={uploadedImage.previewUrl}
-                    alt="Uploaded question"
-                    className="mx-auto h-32 w-full max-w-sm rounded-[22px] object-cover"
-                  />
-                  <span className="block truncate text-base font-black text-ink">{uploadedImage.fileName}</span>
-                </span>
-              ) : (
-                <span className="grid justify-items-center">
-                  <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-white">
-                    <Camera size={24} />
-                  </span>
-                  <span className="mt-3 block text-lg font-black text-ink">
-                    {canSearchArchive ? `选择${selectedArchiveSubject?.name ?? ""}题目图片` : "先准备当前科目题库"}
-                  </span>
-                  <span className="mt-1 block text-xs font-bold text-muted">
-                    {canSearchArchive ? "可从相册选择，也可以拍照；图片不会上传" : "数学已可用，其它科目正在整理"}
-                  </span>
-                </span>
-              )}
-            </button>
-
-            {uploadedImage ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={retryOcr}
-                  disabled={isScanning}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-black text-white disabled:opacity-50"
-                >
-                  <RotateCw size={13} />
-                  重新识别
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleBinarize}
-                  disabled={isScanning}
-                  className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-black disabled:opacity-50 ${
-                    binarize ? "bg-ink text-white" : "bg-cream text-ink"
-                  }`}
-                >
-                  图片增强 {binarize ? "开" : "关"}
-                </button>
-                <span className="text-[11px] font-bold text-muted">看不清时可切换增强后重试</span>
-              </div>
-            ) : null}
-
-            <div className="mt-4 flex items-center gap-2 rounded-[22px] bg-cream px-3 py-2">
-              <Search size={18} className="shrink-0 text-muted" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onBlur={saveSearch}
-                disabled={!canSearchArchive}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") saveSearch();
-                }}
-                placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、知识点、关键词" : "先选择可用科目"}
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-              {componentFilters.map((filter, index) => (
-                <Chip
-                  key={filter.id}
-                  selected={componentGroup === filter.id}
-                  color={index % 2 === 0 ? "blue" : "green"}
-                  onClick={() => setComponentGroup(filter.id)}
-                >
-                  {filter.label}
-                </Chip>
-              ))}
+          <section className="question-mode-panel rounded-[30px] bg-white p-2 shadow-soft">
+            <div className="grid grid-cols-2 gap-1 rounded-[24px] bg-cream p-1">
+              <ModeButton active={mode === "photo"} icon={<Camera size={16} />} label="图片搜题" onClick={() => setMode("photo")} />
+              <ModeButton active={mode === "mistakes"} icon={<NotebookTabs size={16} />} label="错题总结" onClick={() => setMode("mistakes")} />
             </div>
           </section>
+        </aside>
 
-          {isScanning && ocrProgress ? <OcrProgressCard progress={ocrProgress} /> : null}
+        {mode === "photo" ? (
+          <>
+            <section className="question-search-library-column">
+              <OcrBanner
+                stats={databaseStats}
+                subject={selectedArchiveSubject}
+                archiveMeta={selectedArchiveMeta}
+                canSearch={canSearchArchive}
+              />
 
-          {headlineResult ? (
-            <OcrResultCard result={headlineResult} />
-          ) : null}
-
-          {ocrOutcome && !headlineResult && !isScanning ? (
-            <EmptyState
-              title="识别到文字，但没匹配到本地题"
-              detail="可以在下方手动输入卷号 / 题号，或换一张更清晰、保留页眉的截图。"
-            />
-          ) : null}
-
-          {imageError ? (
-            <p className="mt-3 rounded-[20px] bg-white p-3 text-xs font-bold leading-5 text-[#B91C1C] shadow-soft">
-              {imageError}
-            </p>
-          ) : null}
-
-          {canSearchArchive && !uploadedImage && query ? (
-            <RecognitionPanel signal={searchSignal} resultCount={results.length} topResult={results[0]} />
-          ) : null}
-
-          {recentSearches.length > 0 ? (
-            <section className="mt-4">
-              <div className="mb-2 flex items-center gap-2 px-1 text-xs font-black text-muted">
-                <Clock3 size={14} />
-                最近搜索
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                {recentSearches.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setQuery(item)}
-                    className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-ink shadow-soft"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
+              {selectedSubjectHasPaperBrowser ? (
+                <MathPaperBrowser papers={mathPaperArchive} canSearch={canSearchArchive} />
+              ) : selectedArchiveSubject ? (
+                <PlannedPaperBrowser subject={selectedArchiveSubject} />
+              ) : null}
             </section>
-          ) : null}
 
-          {hasInput ? (
-            <section className="mt-5 space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={16} />
-                  <h2 className="text-base font-black text-ink">{headlineResult ? "其他可能" : "相似题匹配"}</h2>
+            <section className="question-search-tool-column">
+              <section className="question-upload-card rounded-[32px] bg-white p-4 shadow-soft">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={!canSearchArchive}
+                  onChange={(event) => handlePhotoSelected(event.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!canSearchArchive}
+                  className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {uploadedImage ? (
+                    <span className="grid w-full gap-3">
+                      <img
+                        src={uploadedImage.previewUrl}
+                        alt="Uploaded question"
+                        className="mx-auto h-32 w-full max-w-sm rounded-[22px] object-cover"
+                      />
+                      <span className="block truncate text-base font-black text-ink">{uploadedImage.fileName}</span>
+                    </span>
+                  ) : (
+                    <span className="grid justify-items-center">
+                      <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-white">
+                        <Camera size={24} />
+                      </span>
+                      <span className="mt-3 block text-lg font-black text-ink">
+                        {canSearchArchive ? `选择${selectedArchiveSubject?.name ?? ""}题目图片` : "先准备当前科目题库"}
+                      </span>
+                      <span className="mt-1 block text-xs font-bold text-muted">
+                        {canSearchArchive ? "可从相册选择，也可以拍照；图片不会上传" : "数学已可用，其它科目正在整理"}
+                      </span>
+                    </span>
+                  )}
+                </button>
+
+                {uploadedImage ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={retryOcr}
+                      disabled={isScanning}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-black text-white disabled:opacity-50"
+                    >
+                      <RotateCw size={13} />
+                      重新识别
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleBinarize}
+                      disabled={isScanning}
+                      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-black disabled:opacity-50 ${
+                        binarize ? "bg-ink text-white" : "bg-cream text-ink"
+                      }`}
+                    >
+                      图片增强 {binarize ? "开" : "关"}
+                    </button>
+                    <span className="text-[11px] font-bold text-muted">看不清时可切换增强后重试</span>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex items-center gap-2 rounded-[22px] bg-cream px-3 py-2">
+                  <Search size={18} className="shrink-0 text-muted" />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onBlur={saveSearch}
+                    disabled={!canSearchArchive}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") saveSearch();
+                    }}
+                    placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、知识点、关键词" : "先选择可用科目"}
+                    className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
+                  />
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-muted shadow-soft">{results.length} 条</span>
-              </div>
 
-              {results
-                .filter((result) => result.question.id !== headlineResult?.question.id)
-                .map((result) => (
-                  <QuestionCard key={result.question.id} result={result} />
-                ))}
+                <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                  {componentFilters.map((filter, index) => (
+                    <Chip
+                      key={filter.id}
+                      selected={componentGroup === filter.id}
+                      color={index % 2 === 0 ? "blue" : "green"}
+                      onClick={() => setComponentGroup(filter.id)}
+                    >
+                      {filter.label}
+                    </Chip>
+                  ))}
+                </div>
+              </section>
 
-              {results.length === 0 ? <EmptyState title="暂时没搜到" detail="保留页眉重新截图，或输入 Paper / 题号 / 知识点。" /> : null}
+              {isScanning && ocrProgress ? <OcrProgressCard progress={ocrProgress} /> : null}
+
+              {headlineResult ? (
+                <OcrResultCard result={headlineResult} />
+              ) : null}
+
+              {ocrOutcome && !headlineResult && !isScanning ? (
+                <EmptyState
+                  title="识别到文字，但没匹配到本地题"
+                  detail="可以在下方手动输入卷号 / 题号，或换一张更清晰、保留页眉的截图。"
+                />
+              ) : null}
+
+              {imageError ? (
+                <p className="rounded-[20px] bg-white p-3 text-xs font-bold leading-5 text-[#B91C1C] shadow-soft">
+                  {imageError}
+                </p>
+              ) : null}
+
+              {canSearchArchive && !uploadedImage && query ? (
+                <RecognitionPanel signal={searchSignal} resultCount={results.length} topResult={results[0]} />
+              ) : null}
+
+              {recentSearches.length > 0 ? (
+                <section className="question-recent-searches">
+                  <div className="mb-2 flex items-center gap-2 px-1 text-xs font-black text-muted">
+                    <Clock3 size={14} />
+                    最近搜索
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                    {recentSearches.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setQuery(item)}
+                        className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-ink shadow-soft"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {hasInput ? (
+                <section className="question-results-panel space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} />
+                      <h2 className="text-base font-black text-ink">{headlineResult ? "其他可能" : "相似题匹配"}</h2>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-muted shadow-soft">{results.length} 条</span>
+                  </div>
+
+                  {results
+                    .filter((result) => result.question.id !== headlineResult?.question.id)
+                    .map((result) => (
+                      <QuestionCard key={result.question.id} result={result} />
+                    ))}
+
+                  {results.length === 0 ? <EmptyState title="暂时没搜到" detail="保留页眉重新截图，或输入 Paper / 题号 / 知识点。" /> : null}
+                </section>
+              ) : null}
             </section>
-          ) : null}
-        </>
-      ) : (
-        <MistakeSummary
-          subjects={subjects}
-          mistakes={mistakes}
-          activeMistakes={activeMistakes}
-          topSubject={topMistakeSubject?.subject}
-          topSubjectCount={topMistakeSubject?.count ?? 0}
-        />
-      )}
+          </>
+        ) : (
+          <section className="question-search-mistakes-column">
+            <MistakeSummary
+              subjects={subjects}
+              mistakes={mistakes}
+              activeMistakes={activeMistakes}
+              topSubject={topMistakeSubject?.subject}
+              topSubjectCount={topMistakeSubject?.count ?? 0}
+            />
+          </section>
+        )}
+      </div>
     </main>
   );
 }
@@ -578,8 +588,8 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
   }, [selectedSessionId, selectedYearGroup]);
 
   return (
-    <section className="mt-4 rounded-[32px] bg-white p-4 shadow-soft">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <section className="math-paper-browser mt-4 rounded-[32px] bg-white p-4 shadow-soft">
+      <div className="math-paper-browser-header mb-3 flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black text-muted">数学 9709 题库</p>
           <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找试卷和答案</h2>
@@ -592,13 +602,13 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="math-paper-metrics grid grid-cols-3 gap-2">
         <ArchiveMetric icon={<CalendarDays size={14} />} label="月份" value={`${math9709PaperDatabaseStats.sessionCount}`} />
         <ArchiveMetric icon={<FileText size={14} />} label="试卷" value={`${math9709PaperDatabaseStats.questionPaperCount}`} />
         <ArchiveMetric icon={<BookOpenCheck size={14} />} label="答案" value={`${math9709PaperDatabaseStats.markSchemeCount}`} />
       </div>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+      <div className="math-paper-year-strip mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {groups.map((group) => (
           <button
             key={group.year}
@@ -617,7 +627,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
       </div>
 
       {selectedYearGroup ? (
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="math-paper-session-grid mt-3 grid grid-cols-3 gap-2">
           {selectedYearGroup.sessions.map((session) => {
             const selected = selectedSession?.id === session.id;
 
@@ -638,7 +648,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
       ) : null}
 
       {selectedSession ? (
-        <div className="mt-4 rounded-[26px] bg-cream p-3">
+        <div className="math-paper-session-panel mt-4 rounded-[26px] bg-cream p-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-black text-muted">{selectedYearGroup?.year}</p>
@@ -655,7 +665,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
             </a>
           </div>
 
-          <div className="grid gap-2">
+          <div className="math-paper-list grid gap-2">
             {selectedSession.papers.map((paper) => (
               <article key={paper.id} className="grid gap-3 rounded-[22px] bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -804,7 +814,7 @@ function SubjectArchivePanel({
         : "题库准备中";
 
   return (
-    <section className="mb-4 rounded-[32px] bg-white p-4 shadow-soft">
+    <section className="subject-archive-panel mb-4 rounded-[32px] bg-white p-4 shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black text-muted">选择科目</p>
@@ -815,7 +825,7 @@ function SubjectArchivePanel({
         </span>
       </div>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+      <div className="subject-archive-list mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {subjects.map((subject, index) => {
           const selected = selectedSubject?.id === subject.id;
           const meta = metas[subject.id];
@@ -849,7 +859,7 @@ function SubjectArchivePanel({
       </div>
 
       {selectedSubject ? (
-        <div className="mt-4 rounded-[26px] bg-cream p-3">
+        <div className="subject-archive-detail mt-4 rounded-[26px] bg-cream p-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-black text-muted">

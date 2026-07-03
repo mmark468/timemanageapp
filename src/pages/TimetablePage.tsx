@@ -184,7 +184,7 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
         }
       />
 
-      <section className="rounded-[26px] bg-white/85 p-4 shadow-soft">
+      <section className="timetable-control-panel rounded-[26px] bg-white/85 p-4 shadow-soft">
         <div className="grid grid-cols-2 gap-2 rounded-full bg-cream p-1">
           {(["学校周", "编辑时间线"] as const).map((mode) => (
             <button
@@ -224,8 +224,8 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
       </section>
 
       {planMode === "学校周" ? (
-        <section className="mt-5 space-y-4">
-          <section className="rounded-[28px] bg-white/85 p-4 shadow-soft">
+        <section className="timetable-school-workspace mt-5 space-y-4">
+          <section className="timetable-course-list rounded-[28px] bg-white/85 p-4 shadow-soft">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black text-muted">课程管理 List</p>
@@ -270,7 +270,7 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
             </div>
           </section>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+          <div className="timetable-day-tabs flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
             {weekdays.map((day) => (
               <button
                 key={day}
@@ -285,7 +285,7 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
             ))}
           </div>
 
-          <div className="rounded-[28px] bg-white/85 p-4 shadow-soft">
+          <div className="timetable-day-panel rounded-[28px] bg-white/85 p-4 shadow-soft">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black text-muted">{useABWeek ? `${weekType} 周时间线` : "常规周时间线"}</p>
@@ -335,8 +335,8 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
           </div>
         </section>
       ) : (
-        <section className="mt-5 space-y-5">
-          <section className="rounded-[28px] bg-white/85 p-5 shadow-soft">
+        <section className="timetable-editor-workspace mt-5 space-y-5">
+          <section className="timetable-batch-editor rounded-[28px] bg-white/85 p-5 shadow-soft">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-black text-muted">批量编辑</p>
@@ -449,7 +449,7 @@ export function TimetablePage({ timetable, onSaveClass, onSaveSeries, onDeleteCl
             </div>
           </section>
 
-          <section className="rounded-[28px] bg-white/85 p-5 shadow-soft">
+          <section className="timetable-single-editor rounded-[28px] bg-white/85 p-5 shadow-soft">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-black text-ink">单节微调</h2>
               <span className="rounded-full bg-cream px-3 py-1 text-xs font-black text-muted">{editing.day}</span>

@@ -1347,7 +1347,7 @@ export default function App() {
   return (
     <div className={`desktop-shell theme-${visualStyle} min-h-screen px-0 sm:px-6 sm:py-5 lg:px-6 lg:py-6`}>
       <div
-        className="app-phone-frame app-responsive-frame relative mx-auto min-h-screen w-full max-w-[390px] border-x border-white/70 bg-cream shadow-[0_22px_70px_rgba(15,23,42,0.14)] sm:rounded-[34px] lg:mx-0 lg:ml-[112px] lg:min-h-[calc(100vh-48px)] lg:w-[calc(100vw-160px)] lg:max-w-[1320px] lg:rounded-[34px] lg:border"
+        className="app-phone-frame app-responsive-frame relative mx-auto min-h-screen w-full max-w-[390px] border-x border-white/70 bg-cream shadow-[0_22px_70px_rgba(15,23,42,0.14)] sm:rounded-[34px] lg:mx-0 lg:ml-[112px] lg:min-h-[calc(100vh-48px)] lg:w-[calc(100vw-148px)] lg:max-w-[1680px] lg:rounded-[34px] lg:border"
         data-desktop-route={desktopLayoutContext.routeName}
         data-desktop-slot={desktopLayoutContext.desktopSlot}
         data-desktop-theme={desktopLayoutContext.visualStyle}

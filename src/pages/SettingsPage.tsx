@@ -56,7 +56,8 @@ export function SettingsPage({
     <main className="settings-page px-5 pb-28 pt-7">
       <PageHeader title="设置" subtitle="个人信息和当前学习范围。" onBack={onBack} />
 
-      <section className="rounded-[28px] bg-white p-5 shadow-soft">
+      <div className="settings-workspace">
+      <section className="settings-profile-panel rounded-[28px] bg-white p-5 shadow-soft">
         <div className="mb-5 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-[20px] bg-ink text-white">
             <UserRound size={22} />
@@ -169,18 +170,19 @@ export function SettingsPage({
       <button
         type="button"
         onClick={save}
-        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink text-sm font-black text-white shadow-pill"
+        className="settings-save-button mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink text-sm font-black text-white shadow-pill"
       >
         <Save size={17} />
         保存设置
       </button>
+      </div>
     </main>
   );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mt-4 rounded-[26px] bg-white p-4 shadow-soft">
+    <section className="settings-section mt-4 rounded-[26px] bg-white p-4 shadow-soft">
       <h2 className="mb-3 text-sm font-black text-ink">{title}</h2>
       <div className="flex flex-wrap gap-2">{children}</div>
     </section>
