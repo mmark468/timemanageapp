@@ -1489,11 +1489,17 @@ video {
 .text-white\/80 {
   color: rgb(255 255 255 / 0.8);
 }
+.line-through {
+  text-decoration-line: line-through;
+}
 .accent-\[\#111827\] {
   accent-color: #111827;
 }
 .accent-\[\#D98A35\] {
   accent-color: #D98A35;
+}
+.opacity-60 {
+  opacity: 0.6;
 }
 .opacity-70 {
   opacity: 0.7;
