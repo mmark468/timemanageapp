@@ -5,13 +5,10 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Download,
   ExternalLink,
   FileText,
   FolderOpen,
   Hash,
-  HardDrive,
-  Layers3,
   Loader2,
   NotebookTabs,
   RotateCw,
@@ -19,10 +16,9 @@ import {
   Search,
   Sparkles,
   Target,
-  WifiOff,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Chip } from "../components/Chip";
 import { createImageFingerprint } from "../features/questionSearch/imageFingerprint";
 import { OcrUnavailableError } from "../features/questionSearch/ocrEngine";
@@ -35,16 +31,15 @@ import {
 import { locateQuestionFromImage } from "../features/questionSearch/questionLocator";
 import {
   buildQuestionArchiveSubjects,
-  downloadQuestionArchive,
-  getDownloadedQuestionArchiveSource,
-  readQuestionArchiveMetas,
-  type LocalQuestionArchiveMeta,
-  type LocalQuestionArchiveMetaMap,
+  getQuestionArchiveSource,
   type QuestionArchiveSubject,
 } from "../features/questionSearch/questionArchiveGateway";
 import {
+  externalPaperProviderHomeUrl,
+  toExternalPaperLink,
+} from "../features/questionSearch/externalPaperLinks";
+import {
   math9709PaperDatabase,
-  math9709PaperDatabaseSourceUrl,
   math9709PaperDatabaseStats,
   type Math9709PaperResource,
   type Math9709SeriesCode,
@@ -89,10 +84,11 @@ interface MathPaperSessionGroup {
   papers: Math9709PaperResource[];
 }
 
+type MathPaperFileKind = "qp" | "ms";
+
 const recentKey = "finished.questionSearch.recent";
 
 type SearchMode = "photo" | "mistakes";
-type ArchiveDownloadStatus = "idle" | "downloading" | "done" | "error";
 
 const componentFilters: Array<{ id: CieMathComponentGroup; label: string; description: string }> = [
   { id: "all", label: "全部", description: "所有 9709 数学组件" },
@@ -116,27 +112,20 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   const [binarize, setBinarize] = useState(true);
   const archiveSubjects = useMemo(() => buildQuestionArchiveSubjects(subjects), [subjects]);
   const [selectedArchiveId, setSelectedArchiveId] = useState("");
-  const [archiveMetas, setArchiveMetas] = useState<LocalQuestionArchiveMetaMap>(() => readQuestionArchiveMetas());
-  const [downloadStatus, setDownloadStatus] = useState<ArchiveDownloadStatus>("idle");
-  const [downloadError, setDownloadError] = useState("");
 
   const selectedArchiveSubject = useMemo(
     () => archiveSubjects.find((subject) => subject.id === selectedArchiveId) ?? archiveSubjects[0] ?? null,
     [archiveSubjects, selectedArchiveId],
   );
-  const selectedArchiveMeta = selectedArchiveSubject ? archiveMetas[selectedArchiveSubject.id] : undefined;
-  const downloadedSource = useMemo(
-    () => getDownloadedQuestionArchiveSource(selectedArchiveSubject, selectedArchiveMeta),
-    [selectedArchiveMeta, selectedArchiveSubject],
-  );
+  const activeSource = useMemo(() => getQuestionArchiveSource(selectedArchiveSubject), [selectedArchiveSubject]);
   const mathPaperArchive =
     selectedArchiveSubject?.board === "CAIE" && selectedArchiveSubject.syllabusCode === "9709" ? math9709PaperDatabase : [];
   const selectedSubjectHasPaperBrowser = mathPaperArchive.length > 0;
-  const canSearchArchive = Boolean(downloadedSource);
+  const canSearchArchive = Boolean(activeSource);
   const databaseStats = useMemo(
     () =>
-      downloadedSource
-        ? getCieMathDatabaseStats(downloadedSource)
+      activeSource
+        ? getCieMathDatabaseStats(activeSource)
         : {
             sourceKind: selectedArchiveSubject?.sourceKind ?? "not-downloaded",
             questionCount: 0,
@@ -144,7 +133,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             components: [],
             years: [],
           },
-    [downloadedSource, selectedArchiveSubject?.sourceKind],
+    [activeSource, selectedArchiveSubject?.sourceKind],
   );
   const ocrText = ocrOutcome?.ocr.text ?? "";
   const effectiveQuery = query.trim() ? query : ocrText;
@@ -166,7 +155,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
     });
   const results = useMemo(
     () => {
-      if (!downloadedSource) return [];
+      if (!activeSource) return [];
       return searchCieMathQuestions(
         {
           query: effectiveQuery,
@@ -174,10 +163,10 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
           fingerprint: uploadedImage?.fingerprint,
           componentGroup,
         },
-        downloadedSource,
+        activeSource,
       );
     },
-    [componentGroup, downloadedSource, effectiveQuery, uploadedImage?.fileName, uploadedImage?.fingerprint],
+    [activeSource, componentGroup, effectiveQuery, uploadedImage?.fileName, uploadedImage?.fingerprint],
   );
 
   useEffect(() => {
@@ -188,8 +177,6 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   }, [archiveSubjects, selectedArchiveId]);
 
   useEffect(() => {
-    setDownloadStatus("idle");
-    setDownloadError("");
     setQuery("");
     setOcrOutcome(null);
     setOcrProgress(null);
@@ -200,22 +187,6 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
       return null;
     });
   }, [selectedArchiveSubject?.id]);
-
-  const handleDownloadArchive = async () => {
-    if (!selectedArchiveSubject) return;
-
-    setDownloadStatus("downloading");
-    setDownloadError("");
-
-    try {
-      const { meta } = await downloadQuestionArchive(selectedArchiveSubject);
-      setArchiveMetas((current) => ({ ...current, [selectedArchiveSubject.id]: meta }));
-      setDownloadStatus("done");
-    } catch (error) {
-      setDownloadStatus("error");
-      setDownloadError(error instanceof Error ? error.message : "题库暂时不能准备。");
-    }
-  };
 
   const isScanning = Boolean(ocrProgress && ocrProgress.stage !== "done" && ocrProgress.stage !== "error");
   const headlineResult = ocrOutcome?.located;
@@ -243,8 +214,8 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
   };
 
   const runOcr = async (image: UploadedImageState, useBinarize: boolean) => {
-    if (!downloadedSource) {
-      setImageError("请先选择已经准备好的科目，再开始搜题。");
+    if (!activeSource) {
+      setImageError("这个科目的题库链接还在整理中，请先切换到可用科目。");
       return;
     }
 
@@ -260,7 +231,7 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
           binarize: useBinarize,
           onProgress: setOcrProgress,
         },
-        downloadedSource,
+        activeSource,
       );
       setOcrOutcome(outcome);
       setOcrProgress({ stage: "done", ratio: 1, label: "识别完成" });
@@ -279,8 +250,8 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
 
   const handlePhotoSelected = async (file?: File) => {
     if (!file) return;
-    if (!downloadedSource) {
-      setImageError("请先选择已经准备好的科目，再选择图片。");
+    if (!activeSource) {
+      setImageError("这个科目的题库链接还在整理中，请先切换到可用科目。");
       return;
     }
 
@@ -319,12 +290,27 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
           <SubjectArchivePanel
             subjects={archiveSubjects}
             selectedSubject={selectedArchiveSubject}
-            metas={archiveMetas}
             onSelect={setSelectedArchiveId}
-            onDownload={handleDownloadArchive}
-            downloadStatus={downloadStatus}
-            downloadError={downloadError}
           />
+
+          {mode === "photo" ? (
+            <SearchEntryPanel
+              fileInputRef={fileInputRef}
+              canSearchArchive={canSearchArchive}
+              selectedSubjectName={selectedArchiveSubject?.name}
+              uploadedImage={uploadedImage}
+              isScanning={isScanning}
+              binarize={binarize}
+              query={query}
+              componentGroup={componentGroup}
+              onPhotoSelected={handlePhotoSelected}
+              onRetryOcr={retryOcr}
+              onToggleBinarize={toggleBinarize}
+              onQueryChange={setQuery}
+              onSaveSearch={saveSearch}
+              onSelectComponentGroup={setComponentGroup}
+            />
+          ) : null}
 
           <section className="question-mode-panel rounded-[30px] bg-white p-2 shadow-soft">
             <div className="grid grid-cols-2 gap-1 rounded-[24px] bg-cream p-1">
@@ -340,7 +326,6 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
               <OcrBanner
                 stats={databaseStats}
                 subject={selectedArchiveSubject}
-                archiveMeta={selectedArchiveMeta}
                 canSearch={canSearchArchive}
               />
 
@@ -352,99 +337,6 @@ export function QuestionSearchPage({ subjects, mistakes }: QuestionSearchPagePro
             </section>
 
             <section className="question-search-tool-column">
-              <section className="question-upload-card rounded-[32px] bg-white p-4 shadow-soft">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={!canSearchArchive}
-                  onChange={(event) => handlePhotoSelected(event.target.files?.[0])}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!canSearchArchive}
-                  className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {uploadedImage ? (
-                    <span className="grid w-full gap-3">
-                      <img
-                        src={uploadedImage.previewUrl}
-                        alt="Uploaded question"
-                        className="mx-auto h-32 w-full max-w-sm rounded-[22px] object-cover"
-                      />
-                      <span className="block truncate text-base font-black text-ink">{uploadedImage.fileName}</span>
-                    </span>
-                  ) : (
-                    <span className="grid justify-items-center">
-                      <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-white">
-                        <Camera size={24} />
-                      </span>
-                      <span className="mt-3 block text-lg font-black text-ink">
-                        {canSearchArchive ? `选择${selectedArchiveSubject?.name ?? ""}题目图片` : "先准备当前科目题库"}
-                      </span>
-                      <span className="mt-1 block text-xs font-bold text-muted">
-                        {canSearchArchive ? "可从相册选择，也可以拍照；图片不会上传" : "数学已可用，其它科目正在整理"}
-                      </span>
-                    </span>
-                  )}
-                </button>
-
-                {uploadedImage ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={retryOcr}
-                      disabled={isScanning}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-black text-white disabled:opacity-50"
-                    >
-                      <RotateCw size={13} />
-                      重新识别
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleBinarize}
-                      disabled={isScanning}
-                      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-black disabled:opacity-50 ${
-                        binarize ? "bg-ink text-white" : "bg-cream text-ink"
-                      }`}
-                    >
-                      图片增强 {binarize ? "开" : "关"}
-                    </button>
-                    <span className="text-[11px] font-bold text-muted">看不清时可切换增强后重试</span>
-                  </div>
-                ) : null}
-
-                <div className="mt-4 flex items-center gap-2 rounded-[22px] bg-cream px-3 py-2">
-                  <Search size={18} className="shrink-0 text-muted" />
-                  <input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onBlur={saveSearch}
-                    disabled={!canSearchArchive}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") saveSearch();
-                    }}
-                    placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、知识点、关键词" : "先选择可用科目"}
-                    className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                  {componentFilters.map((filter, index) => (
-                    <Chip
-                      key={filter.id}
-                      selected={componentGroup === filter.id}
-                      color={index % 2 === 0 ? "blue" : "green"}
-                      onClick={() => setComponentGroup(filter.id)}
-                    >
-                      {filter.label}
-                    </Chip>
-                  ))}
-                </div>
-              </section>
-
               {isScanning && ocrProgress ? <OcrProgressCard progress={ocrProgress} /> : null}
 
               {headlineResult ? (
@@ -565,6 +457,133 @@ function buildMathPaperYearGroups(papers: Math9709PaperResource[]): MathPaperYea
     .sort((left, right) => right.year - left.year);
 }
 
+function SearchEntryPanel({
+  fileInputRef,
+  canSearchArchive,
+  selectedSubjectName,
+  uploadedImage,
+  isScanning,
+  binarize,
+  query,
+  componentGroup,
+  onPhotoSelected,
+  onRetryOcr,
+  onToggleBinarize,
+  onQueryChange,
+  onSaveSearch,
+  onSelectComponentGroup,
+}: {
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  canSearchArchive: boolean;
+  selectedSubjectName?: string;
+  uploadedImage: UploadedImageState | null;
+  isScanning: boolean;
+  binarize: boolean;
+  query: string;
+  componentGroup: CieMathComponentGroup;
+  onPhotoSelected: (file?: File) => void;
+  onRetryOcr: () => void;
+  onToggleBinarize: () => void;
+  onQueryChange: (value: string) => void;
+  onSaveSearch: () => void;
+  onSelectComponentGroup: (group: CieMathComponentGroup) => void;
+}) {
+  return (
+    <section className="question-upload-card mb-4 rounded-[32px] bg-white p-4 shadow-soft">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={!canSearchArchive}
+        onChange={(event) => onPhotoSelected(event.target.files?.[0])}
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={!canSearchArchive}
+        className="grid min-h-44 w-full place-items-center overflow-hidden rounded-[28px] border-2 border-dashed border-black/10 bg-cream p-4 text-center transition disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {uploadedImage ? (
+          <span className="grid w-full gap-3">
+            <img
+              src={uploadedImage.previewUrl}
+              alt="Uploaded question"
+              className="mx-auto h-32 w-full max-w-sm rounded-[22px] object-cover"
+            />
+            <span className="block truncate text-base font-black text-ink">{uploadedImage.fileName}</span>
+          </span>
+        ) : (
+          <span className="grid justify-items-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-white">
+              <Camera size={24} />
+            </span>
+            <span className="mt-3 block text-lg font-black text-ink">
+              {canSearchArchive ? `选择${selectedSubjectName ?? ""}题目图片` : "当前科目链接整理中"}
+            </span>
+            <span className="mt-1 block text-xs font-bold text-muted">
+              {canSearchArchive ? "可从相册选择，也可以拍照；图片不会上传" : "可以先切换到已接入的科目"}
+            </span>
+          </span>
+        )}
+      </button>
+
+      {uploadedImage ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onRetryOcr}
+            disabled={isScanning}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-black text-white disabled:opacity-50"
+          >
+            <RotateCw size={13} />
+            重新识别
+          </button>
+          <button
+            type="button"
+            onClick={onToggleBinarize}
+            disabled={isScanning}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-black disabled:opacity-50 ${
+              binarize ? "bg-ink text-white" : "bg-cream text-ink"
+            }`}
+          >
+            图片增强 {binarize ? "开" : "关"}
+          </button>
+          <span className="text-[11px] font-bold text-muted">看不清时可切换增强后重试</span>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex items-center gap-2 rounded-[22px] bg-cream px-3 py-2">
+        <Search size={18} className="shrink-0 text-muted" />
+        <input
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          onBlur={onSaveSearch}
+          disabled={!canSearchArchive}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") onSaveSearch();
+          }}
+          placeholder={canSearchArchive ? "可补充：9709/12/M/J/24 Q3、知识点、关键词" : "先选择可用科目"}
+          className="h-11 min-w-0 flex-1 bg-transparent text-sm font-black text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
+        />
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        {componentFilters.map((filter, index) => (
+          <Chip
+            key={filter.id}
+            selected={componentGroup === filter.id}
+            color={index % 2 === 0 ? "blue" : "green"}
+            onClick={() => onSelectComponentGroup(filter.id)}
+          >
+            {filter.label}
+          </Chip>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource[]; canSearch: boolean }) {
   const groups = useMemo(() => buildMathPaperYearGroups(papers), [papers]);
   const [selectedYear, setSelectedYear] = useState<number | undefined>(() => groups[0]?.year);
@@ -594,7 +613,7 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
           <p className="text-xs font-black text-muted">数学 9709 题库</p>
           <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找试卷和答案</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
-            {canSearch ? "可以直接按文件夹打开对应卷号。" : "先浏览题库；准备好后可用卷号和文件名搜索。"}
+            {canSearch ? "可以直接按文件夹打开对应卷号。" : "链接接入后可用卷号和文件名搜索。"}
           </p>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
@@ -655,35 +674,21 @@ function MathPaperBrowser({ papers, canSearch }: { papers: Math9709PaperResource
               <h3 className="mt-1 text-lg font-black text-ink">{selectedSession.sessionLabel}</h3>
             </div>
             <a
-              href={selectedSession.papers[0]?.sourcePageUrl ?? math9709PaperDatabaseSourceUrl}
+              href={externalPaperProviderHomeUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-black text-ink"
             >
-              原页面
+              线上题库
               <ExternalLink size={12} />
             </a>
           </div>
 
           <div className="math-paper-list grid gap-2">
-            {selectedSession.papers.map((paper) => (
-              <article key={paper.id} className="grid gap-3 rounded-[22px] bg-white p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-base font-black leading-6 text-ink">{formatMathPaperResourceCode(paper)}</p>
-                    <p className="mt-1 truncate text-xs font-black text-muted">{paper.paperLabel}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-cream px-2.5 py-1 text-[11px] font-black text-muted">
-                    Paper {paper.componentCode}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <PaperQuickLink icon={<FileText size={14} />} label="试卷" link={paper.questionPaper} />
-                  <PaperQuickLink icon={<BookOpenCheck size={14} />} label="答案" link={paper.markScheme} />
-                </div>
-              </article>
-            ))}
+            {selectedSession.papers.flatMap((paper) => [
+              <PaperFileCard key={`${paper.id}-qp`} paper={paper} fileKind="qp" link={paper.questionPaper} />,
+              <PaperFileCard key={`${paper.id}-ms`} paper={paper} fileKind="ms" link={paper.markScheme} />,
+            ])}
           </div>
         </div>
       ) : null}
@@ -699,7 +704,7 @@ function PlannedPaperBrowser({ subject }: { subject: QuestionArchiveSubject }) {
           <p className="text-xs font-black text-muted">{subject.name}题库</p>
           <h2 className="mt-1 text-xl font-black text-ink">按年份 / 月份找试卷和答案</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
-            这个科目的题库正在整理，完成后会和数学一样进入年份、考试月份和卷号文件夹。
+            这个科目会沿用数学的文件夹结构：年份、考试月份、卷号、QP 和 MS。
           </p>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
@@ -709,8 +714,8 @@ function PlannedPaperBrowser({ subject }: { subject: QuestionArchiveSubject }) {
 
       <div className="grid grid-cols-3 gap-2">
         <ArchiveMetric icon={<CalendarDays size={14} />} label="年份" value={`${subject.fromYear}+`} />
-        <ArchiveMetric icon={<FileText size={14} />} label="试卷" value="整理中" />
-        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="答案" value="整理中" />
+        <ArchiveMetric icon={<FileText size={14} />} label="试卷" value="待接入" />
+        <ArchiveMetric icon={<BookOpenCheck size={14} />} label="答案" value="待接入" />
       </div>
 
       <div className="mt-4 rounded-[26px] bg-cream p-3">
@@ -719,9 +724,9 @@ function PlannedPaperBrowser({ subject }: { subject: QuestionArchiveSubject }) {
             <FolderOpen size={17} />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-black text-ink">题库准备中</p>
+            <p className="text-sm font-black text-ink">结构已保留</p>
             <p className="mt-1 text-xs font-bold leading-5 text-muted">
-              你现在可以先切回数学测试完整流程；这个科目完成后会使用同样的文件夹结构。
+              链接接入后，这里会直接显示对应年份、月份和卷号，不需要改变用户操作方式。
             </p>
           </div>
         </div>
@@ -730,36 +735,51 @@ function PlannedPaperBrowser({ subject }: { subject: QuestionArchiveSubject }) {
   );
 }
 
-function PaperQuickLink({
-  icon,
-  label,
+function PaperFileCard({
+  paper,
+  fileKind,
   link,
 }: {
-  icon: ReactNode;
-  label: string;
+  paper: Math9709PaperResource;
+  fileKind: MathPaperFileKind;
   link?: Math9709PaperResource["questionPaper"];
 }) {
+  const externalLink = link ? toExternalPaperLink(link) : undefined;
+  const fileLabel = fileKind.toUpperCase();
+  const title = `Paper ${paper.componentCode} ${fileLabel}`;
+  const detail = `${formatMathPaperResourceCode(paper)} · ${formatMathPaperCategory(paper)}`;
+  const icon = fileKind === "qp" ? <FileText size={16} /> : <BookOpenCheck size={16} />;
+
   if (!link) {
     return (
-      <span className="flex h-10 items-center justify-center gap-2 rounded-full bg-cream text-xs font-black text-muted">
-        {icon}
-        {label}
+      <span className="grid min-h-20 gap-1 rounded-[20px] bg-white/70 p-3 text-left text-muted">
+        <span className="flex items-center gap-2 text-base font-black">
+          {icon}
+          {title}
+        </span>
+        <span className="text-xs font-bold leading-5">{detail}</span>
       </span>
     );
   }
 
   return (
     <a
-      href={link.url}
+      href={externalLink?.url}
       target="_blank"
       rel="noreferrer"
-      download={link.fileName}
-      className="flex h-10 items-center justify-center gap-2 rounded-full bg-ink text-xs font-black text-white"
+      className="grid min-h-20 grid-cols-[1fr_auto] items-center gap-3 rounded-[20px] bg-white p-3 text-left shadow-[0_10px_22px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5"
       title={link.fileName}
     >
-      {icon}
-      {label}
-      <ExternalLink size={12} />
+      <span className="min-w-0">
+        <span className="flex items-center gap-2 text-base font-black leading-6 text-ink">
+          {icon}
+          {title}
+        </span>
+        <span className="mt-1 block truncate text-xs font-bold text-muted">{detail}</span>
+      </span>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cream text-ink">
+        <ExternalLink size={14} />
+      </span>
     </a>
   );
 }
@@ -771,6 +791,10 @@ function sortMathPapers(papers: Math9709PaperResource[]) {
 function formatMathPaperResourceCode(paper: Math9709PaperResource) {
   const yearShort = String(paper.year).slice(-2);
   return `${paper.syllabusCode}/${paper.componentCode}/${seriesShortCodeFromSeriesCode(paper.seriesCode)}/${yearShort}`;
+}
+
+function formatMathPaperCategory(paper: Math9709PaperResource) {
+  return paper.paperLabel.replace(/^Paper\s+\d+\s*/i, "").trim();
 }
 
 function seriesShortCodeFromSeriesCode(seriesCode: Math9709SeriesCode) {
@@ -788,37 +812,18 @@ function mathSeriesSortValue(seriesCode: Math9709SeriesCode) {
 function SubjectArchivePanel({
   subjects,
   selectedSubject,
-  metas,
   onSelect,
-  onDownload,
-  downloadStatus,
-  downloadError,
 }: {
   subjects: QuestionArchiveSubject[];
   selectedSubject: QuestionArchiveSubject | null;
-  metas: LocalQuestionArchiveMetaMap;
   onSelect: (subjectId: string) => void;
-  onDownload: () => void;
-  downloadStatus: ArchiveDownloadStatus;
-  downloadError: string;
 }) {
-  const selectedMeta = selectedSubject ? metas[selectedSubject.id] : undefined;
-  const isDownloading = downloadStatus === "downloading";
-  const canDownload = selectedSubject?.availability === "ready";
-  const buttonLabel = isDownloading
-    ? "正在准备"
-    : selectedMeta
-      ? "更新题库"
-      : canDownload
-        ? "准备 2018+ 题目答案"
-        : "题库准备中";
-
   return (
     <section className="subject-archive-panel mb-4 rounded-[32px] bg-white p-4 shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-muted">选择科目</p>
-          <h2 className="mt-1 text-xl font-black text-ink">先选科目，再找题目</h2>
+          <p className="text-xs font-black text-muted">科目选择</p>
+          <h2 className="mt-1 text-xl font-black text-ink">选择搜题科目</h2>
         </div>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink">
           <BookOpenCheck size={20} />
@@ -828,7 +833,6 @@ function SubjectArchivePanel({
       <div className="subject-archive-list mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {subjects.map((subject, index) => {
           const selected = selectedSubject?.id === subject.id;
-          const meta = metas[subject.id];
           const selectedBackground = archiveSubjectTones[index % archiveSubjectTones.length];
 
           return (
@@ -847,102 +851,15 @@ function SubjectArchivePanel({
             >
               <span className="flex items-center justify-between gap-2">
                 <span className={`truncate text-sm font-black ${selected ? "text-white" : "text-ink"}`}>{subject.name}</span>
-                {meta ? <CheckCircle2 size={15} className={`shrink-0 ${selected ? "text-white" : "text-[#166534]"}`} /> : null}
               </span>
               <span className={`text-[11px] font-black ${selected ? "text-white/75" : "text-muted"}`}>
                 {subject.board} {subject.syllabusCode}
               </span>
-              <ArchiveStatusPill subject={subject} meta={meta} selected={selected} />
             </button>
           );
         })}
       </div>
-
-      {selectedSubject ? (
-        <div className="subject-archive-detail mt-4 rounded-[26px] bg-cream p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-black text-muted">
-                {selectedSubject.board} {selectedSubject.syllabusCode} · {selectedSubject.availabilityLabel}
-              </p>
-              <h3 className="mt-1 truncate text-lg font-black text-ink">{selectedSubject.name}题库</h3>
-              <p className="mt-1 text-xs font-bold leading-5 text-muted">{selectedSubject.description}</p>
-            </div>
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink">
-              <HardDrive size={18} />
-            </span>
-          </div>
-
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <ArchiveMetric icon={<Layers3 size={14} />} label="范围" value={`${selectedSubject.fromYear}+`} />
-            <ArchiveMetric icon={<FileText size={14} />} label="试卷" value={selectedMeta ? `${selectedMeta.questionCount}` : "未准备"} />
-            <ArchiveMetric
-              icon={<BookOpenCheck size={14} />}
-              label="答案"
-              value={selectedMeta ? `${selectedMeta.answerCount}` : "未准备"}
-            />
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={onDownload}
-              disabled={!canDownload || isDownloading}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {buttonLabel}
-            </button>
-            {selectedMeta ? (
-              <span className="text-[11px] font-black text-muted">已保存：{formatArchiveDate(selectedMeta.downloadedAt)}</span>
-            ) : null}
-          </div>
-
-          {downloadError ? (
-            <p className="mt-3 rounded-[18px] bg-white p-3 text-xs font-bold leading-5 text-[#B91C1C]">{downloadError}</p>
-          ) : null}
-        </div>
-      ) : null}
     </section>
-  );
-}
-
-function ArchiveStatusPill({
-  subject,
-  meta,
-  selected,
-}: {
-  subject: QuestionArchiveSubject;
-  meta?: LocalQuestionArchiveMeta;
-  selected: boolean;
-}) {
-  if (meta) {
-    return (
-      <span
-        className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black ${
-          selected ? "bg-white text-ink" : "bg-white text-[#166534]"
-        }`}
-      >
-        <CheckCircle2 size={12} />
-        已准备
-      </span>
-    );
-  }
-
-  if (subject.availability === "ready") {
-    return (
-      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-ink">
-        <Download size={12} />
-        可准备
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-black text-muted">
-      <WifiOff size={12} />
-      准备中
-    </span>
   );
 }
 
@@ -958,19 +875,9 @@ function ArchiveMetric({ icon, label, value }: { icon: ReactNode; label: string;
   );
 }
 
-function formatArchiveDate(value: string) {
-  return new Date(value).toLocaleString("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function OcrBanner({
   stats,
   subject,
-  archiveMeta,
   canSearch,
 }: {
   stats: {
@@ -981,7 +888,6 @@ function OcrBanner({
     sourceKind: string;
   };
   subject: QuestionArchiveSubject | null;
-  archiveMeta?: LocalQuestionArchiveMeta;
   canSearch: boolean;
 }) {
   return (
@@ -995,19 +901,13 @@ function OcrBanner({
             {subject ? `${subject.name} ${subject.syllabusCode}` : "选择科目"}
           </p>
           <h2 className="mt-1 text-lg font-black text-ink">
-            {canSearch ? "选择图片或输入卷号找答案" : "这个科目题库正在准备"}
+            {canSearch ? "选择图片或输入卷号找答案" : "这个科目链接正在整理"}
           </h2>
           <p className="mt-1 text-xs font-bold leading-5 text-muted">
             {canSearch
-              ? `当前已准备 ${stats.questionCount} 条题目线索和 ${archiveMeta?.answerCount ?? 0} 份答案。图片只在你的设备上读取。`
-              : "完成后会和数学一样，可以按年份、月份和卷号查找。"}
+              ? `当前可定位 ${stats.questionCount} 条试卷/题目线索，QP 和 MS 会直接跳转查看。图片只在你的设备上读取。`
+              : "结构会和数学一样保留，链接接入后可按年份、月份和卷号查找。"}
           </p>
-          {canSearch ? (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-muted">
-              <CheckCircle2 size={13} />
-              已准备好
-            </div>
-          ) : null}
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 # 时间规划
 
-面向中国国际学生和 A-Level 学生的学习时间管理前端 MVP。当前版本可以作为本地可用的网页 App 试用：个人档案、任务、课表、今日时间轴、放假时间、单元进度、A-Level 搜题记录和番茄钟记录都会保存在浏览器 localStorage。
+面向中国国际学生和 A-Level 学生的学习时间管理 MVP。当前版本是本地可用的网页 App，个人档案、任务、课表、今日安排、日历、科目进度、搜题记录和番茄钟记录都会保存在浏览器 `localStorage`。
 
 ## 技术栈
 
@@ -8,11 +8,9 @@
 - TypeScript
 - Tailwind CSS
 - lucide-react
-- localStorage 本地保存个人档案、任务、课表、今日时间轴、放假时间、单元进度、搜题记录和番茄钟记录
+- localStorage 本地数据保存
 
 ## 本地运行
-
-如果电脑已经安装 Node.js / npm：
 
 ```bash
 npm install
@@ -28,76 +26,53 @@ npm run build
 npm run preview
 ```
 
-如果使用当前项目里自动准备好的本地 Node/npm 环境：
+如果使用项目中准备好的本地 Node/npm 环境：
 
 ```bash
 scripts/dev-local.sh
 ```
 
-## 微信小程序版
+## 模块化结构
 
-项目里已经新增一套原生微信小程序工程：
-
-```text
-wechat-miniprogram/
-```
-
-用微信开发者工具选择“导入项目”，项目目录选 `wechat-miniprogram`。正式发布前，把 `wechat-miniprogram/project.config.json` 里的 `appid` 从 `touristappid` 改成你自己的小程序 AppID。
-
-## 发给别人测试
-
-最简单的在线测试方式：
-
-1. 运行 `npm run build`
-2. 打开 Netlify Drop：https://app.netlify.com/drop
-3. 把 `dist` 文件夹拖进去
-4. 把生成的链接发给别人
-
-也可以把整个项目发给技术同学，对方运行：
-
-```bash
-npm install
-npm run dev
-```
-
-注意：这是纯前端本地 MVP，没有账号和云同步。不同测试者的数据会分别存在各自浏览器的 localStorage 中。
-
-## 项目结构
+项目按模块化设计拆分，方便后续分别维护前端 UI、搜题程序和后端 database，不需要把所有逻辑混在一个页面里。
 
 ```text
 docs/
   module-design.md      # 前端 UI / 搜题程序 / 后端 database 的模块边界
 src/
-  App.tsx               # 应用状态、页面切换和核心交互
+  App.tsx               # 应用状态、页面切换和核心交互入口
   components/           # 通用 UI 组件
-  data/mockData.ts      # 首次打开时使用的示例学科、任务、课表、错题和番茄钟数据
-  pages/                # 各产品页面
-  types.ts              # 数据结构类型
+  data/                 # 初始示例数据
+  features/
+    questionSearch/     # 搜题模块：题库索引、搜索、图片识别和题目定位
+  pages/                # 产品页面
+  types.ts              # 共享数据类型
   utils/                # localStorage 与日期工具
 backend/
-  caie_papers/          # CAIE past-paper 采集、索引、SQLite/FTS 搜索和本地 HTTP API
-wechat-miniprogram/     # 原生微信小程序版
+  caie_papers/          # CAIE past-paper 采集、索引、SQLite/FTS 搜索和本地 HTTP API 原型
 ```
 
-更完整的模块边界见 [`docs/module-design.md`](docs/module-design.md)：里面把项目拆成前端 UI、中间搜题程序、后端 database 三层。
+更完整的模块边界见 [`docs/module-design.md`](docs/module-design.md)。
 
-## 已实现的 MVP 交互
+## MVP 已实现
 
-- 欢迎页进入个人档案设置页，选择姓名、年级、课程体系、考试局和科目
-- 首次进入会让用户自己设置每门课的每周次数、星期、开始时间、结束时间和教室
-- 5 个固定底部 Tab：今天、日历、科目、课表、搜题
-- 今日首页展示考试倒计时、今日安排、今日任务和专注状态
-- 学习日历按月查看事项，点击时间块进入独立编辑页
-- 添加学习任务后可同步进入学习日历、今日时间轴、学校课表或番茄钟目标
-- 学习任务支持添加、完成、编辑、删除和加入番茄钟
-- 课表支持学校周/自定义计划、A/B 周、课程总量 List、批量编辑和单节微调
-- 今日时间轴按持续时间显示长度，点击事件进入独立编辑页
-- 科目卡片进入科目详情，单元进入单元进度详情
-- 单元学习进度和刷题进度可由用户手动调整并保存
-- 单元可加入番茄钟，专注页会显示当前学习目标
-- 番茄钟支持开始、暂停、重置和完成本轮
-- A-Level 搜题页支持按科目、Paper、知识点和关键词搜索本地 mock 题库
+- 首次进入设置个人档案、课程体系、考试局和科目
+- 首页整合今日安排、任务截止时间、考试倒计时和番茄钟
+- 日历按月查看事项，并支持编辑任务、课程、考试和假期
+- 科目页管理单元学习进度和刷题进度
+- 课表支持学校周、自定义时间线、A/B 周、批量编辑和单节微调
+- 番茄钟支持开始、暂停、重置和完成记录
+- 搜题页支持按科目、年份、月份、卷号、Paper、知识点和关键词查找本地题库
+- 数学 9709 已接入 2018 年以后的 QP/MS paper-level database 浏览入口
 
-## MVP 边界
+## 当前边界
 
-首版 Web App 默认没有登录、云同步、支付、AI 计划或通知推送。用户学习计划数据仍保存在浏览器本地；仓库中已经包含 CAIE past-paper 后端原型，便于后续把搜题页从本地 mock 题库替换成真实 API。
+- 目前没有登录、云同步、支付、通知推送或 AI 自动计划。
+- 用户数据默认保存在当前浏览器的 `localStorage`，换设备不会自动同步。
+- 搜题模块已预留后端 database 接口；当前数学题库主要是 paper-level QP/MS 索引，逐题深度搜索需要后续继续扩展。
+
+## 协作和存档规则
+
+- 日常小改不需要每次都写新的 `CHANGELOG.md`。
+- 当明确要求“存入新分支”“存档”“发布新版本”时，再检查当前 diff，总结该存档点的修改，并写入新的 change 记录。
+- 较大改动先保留在单独分支或预览路径，确认后再合并到主版本。
