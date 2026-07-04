@@ -672,6 +672,9 @@ video {
 .h-44 {
   height: 11rem;
 }
+.h-6 {
+  height: 1.5rem;
+}
 .h-72 {
   height: 18rem;
 }
@@ -741,6 +744,9 @@ video {
 .w-40 {
   width: 10rem;
 }
+.w-6 {
+  width: 1.5rem;
+}
 .w-7 {
   width: 1.75rem;
 }
@@ -773,6 +779,12 @@ video {
 }
 .min-w-16 {
   min-width: 4rem;
+}
+.min-w-20 {
+  min-width: 5rem;
+}
+.min-w-\[128px\] {
+  min-width: 128px;
 }
 .min-w-\[58px\] {
   min-width: 58px;
@@ -854,6 +866,9 @@ video {
 }
 .grid-cols-\[72px_8px_1fr\] {
   grid-template-columns: 72px 8px 1fr;
+}
+.grid-cols-\[minmax\(0\2c 1fr\)_auto\] {
+  grid-template-columns: minmax(0,1fr) auto;
 }
 .flex-col {
   flex-direction: column;
@@ -1160,6 +1175,9 @@ video {
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.bg-white\/15 {
+  background-color: rgb(255 255 255 / 0.15);
 }
 .bg-white\/55 {
   background-color: rgb(255 255 255 / 0.55);
@@ -1862,10 +1880,6 @@ button:disabled {
     grid-template-columns: minmax(260px,0.78fr) minmax(0,1.22fr);
   }
 
-  .md\:flex-wrap {
-    flex-wrap: wrap;
-  }
-
   .md\:items-start {
     align-items: flex-start;
   }
@@ -1894,10 +1908,6 @@ button:disabled {
 
   .md\:overflow-hidden {
     overflow: hidden;
-  }
-
-  .md\:overflow-visible {
-    overflow: visible;
   }
 
   .md\:overflow-y-auto {
