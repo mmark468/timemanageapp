@@ -867,12 +867,6 @@ video {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
-.cursor-default {
-  cursor: default;
-}
-.cursor-pointer {
-  cursor: pointer;
-}
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -926,9 +920,6 @@ video {
 }
 .items-center {
   align-items: center;
-}
-.items-stretch {
-  align-items: stretch;
 }
 .justify-end {
   justify-content: flex-end;
@@ -984,9 +975,6 @@ video {
   --tw-space-y-reverse: 0;
   margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
-}
-.self-center {
-  align-self: center;
 }
 .overflow-auto {
   overflow: auto;
@@ -1381,10 +1369,6 @@ video {
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
-}
-.py-5 {
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
 }
 .py-7 {
   padding-top: 1.75rem;
@@ -2199,10 +2183,6 @@ button:disabled {
     height: 100%;
   }
 
-  .lg\:max-h-\[calc\(100dvh-96px\)\] {
-    max-height: calc(100dvh - 96px);
-  }
-
   .lg\:min-h-0 {
     min-height: 0px;
   }
@@ -2265,10 +2245,6 @@ button:disabled {
 
   .lg\:grid-cols-\[96px_minmax\(0\2c 1fr\)\] {
     grid-template-columns: 96px minmax(0,1fr);
-  }
-
-  .lg\:grid-cols-\[minmax\(0\2c 1fr\)_300px\] {
-    grid-template-columns: minmax(0,1fr) 300px;
   }
 
   .lg\:grid-cols-\[minmax\(0\2c 1fr\)_380px\] {
@@ -2431,10 +2407,6 @@ button:disabled {
 
   .xl\:grid-cols-\[minmax\(0\2c 0\.98fr\)_minmax\(420px\2c 0\.82fr\)\] {
     grid-template-columns: minmax(0,0.98fr) minmax(420px,0.82fr);
-  }
-
-  .xl\:grid-cols-\[minmax\(0\2c 1fr\)_380px\] {
-    grid-template-columns: minmax(0,1fr) 380px;
   }
 
   .xl\:grid-cols-\[minmax\(420px\2c 0\.96fr\)_minmax\(0\2c 1\.04fr\)\] {
@@ -2733,6 +2705,10 @@ body.theme-dark {
   border-color: var(--line) !important;
 }
 
+.calendar-time-scroll {
+  max-height: none;
+}
+
 .calendar-date-strip {
   background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
 }
@@ -2816,6 +2792,14 @@ body.theme-dark {
   background: #342c26;
 }
 
+.calendar-event-block[data-category="学习"] {
+  background: #f3f5ec;
+}
+
+.theme-dark .calendar-event-block[data-category="学习"] {
+  background: #302c22;
+}
+
 .calendar-empty-slot {
   background: color-mix(in srgb, var(--surface-strong) 78%, transparent) !important;
   border: 1px dashed var(--line);
@@ -2874,6 +2858,25 @@ body.theme-dark {
     left: auto;
     right: 32px;
     bottom: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .calendar-time-scroll {
+    max-height: calc(100dvh - 360px);
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted) 30%, transparent) transparent;
+  }
+
+  .calendar-time-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .calendar-time-scroll::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 26%, transparent);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
   }
 }
 
