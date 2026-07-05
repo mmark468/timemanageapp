@@ -838,6 +838,9 @@ video {
 .flex-1 {
   flex: 1 1 0%;
 }
+.flex-none {
+  flex: none;
+}
 .shrink-0 {
   flex-shrink: 0;
 }
@@ -869,6 +872,9 @@ video {
 }
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+.auto-rows-fr {
+  grid-auto-rows: minmax(0, 1fr);
 }
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2164,12 +2170,12 @@ button:disabled {
     margin-top: 0.5rem;
   }
 
-  .lg\:block {
-    display: block;
-  }
-
   .lg\:flex {
     display: flex;
+  }
+
+  .lg\:grid {
+    display: grid;
   }
 
   .lg\:hidden {
@@ -2260,12 +2266,12 @@ button:disabled {
     grid-template-columns: 248px minmax(0,1fr);
   }
 
-  .lg\:grid-cols-\[310px_minmax\(0\2c 1fr\)\] {
-    grid-template-columns: 310px minmax(0,1fr);
-  }
-
   .lg\:grid-cols-\[320px_minmax\(0\2c 1fr\)\] {
     grid-template-columns: 320px minmax(0,1fr);
+  }
+
+  .lg\:grid-cols-\[360px_minmax\(0\2c 1fr\)\] {
+    grid-template-columns: 360px minmax(0,1fr);
   }
 
   .lg\:grid-cols-\[46px_minmax\(0\2c 1fr\)\] {
@@ -2278,6 +2284,10 @@ button:disabled {
 
   .lg\:grid-cols-\[minmax\(0\2c 1fr\)_380px\] {
     grid-template-columns: minmax(0,1fr) 380px;
+  }
+
+  .lg\:grid-cols-\[minmax\(0\2c 1fr\)_auto\] {
+    grid-template-columns: minmax(0,1fr) auto;
   }
 
   .lg\:grid-cols-\[minmax\(0\2c 1fr\)_minmax\(360px\2c 0\.82fr\)\] {
@@ -2314,10 +2324,6 @@ button:disabled {
 
   .lg\:items-stretch {
     align-items: stretch;
-  }
-
-  .lg\:justify-between {
-    justify-content: space-between;
   }
 
   .lg\:gap-3 {
@@ -2443,8 +2449,8 @@ button:disabled {
     grid-template-columns: 268px minmax(0,1fr);
   }
 
-  .xl\:grid-cols-\[330px_minmax\(0\2c 1fr\)\] {
-    grid-template-columns: 330px minmax(0,1fr);
+  .xl\:grid-cols-\[390px_minmax\(0\2c 1fr\)\] {
+    grid-template-columns: 390px minmax(0,1fr);
   }
 
   .xl\:grid-cols-\[minmax\(0\2c 0\.95fr\)_minmax\(0\2c 1\.05fr\)\] {
