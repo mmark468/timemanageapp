@@ -1,0 +1,47 @@
+.month-card {
+  margin-top: 28rpx;
+  padding: 32rpx;
+}
+
+.today-text {
+  margin: 12rpx 0;
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.small {
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.event {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+  padding: 24rpx;
+}
+
+.date-box {
+  width: 128rpx;
+  margin-right: 20rpx;
+  padding: 20rpx 0;
+  border-radius: 24rpx;
+  background: #f6f8fb;
+  text-align: center;
+}
+
+.date-main {
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.event-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}

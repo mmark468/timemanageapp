@@ -1,0 +1,38 @@
+.overview {
+  margin-top: 28rpx;
+  padding: 30rpx;
+}
+
+.overview-top,
+.unit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.overview-title {
+  margin-top: 8rpx;
+  font-size: 46rpx;
+  font-weight: 900;
+}
+
+.small {
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.progress-track {
+  margin: 24rpx 0 16rpx;
+}
+
+.unit,
+.mistake {
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+}
+
+.unit-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.4;
+}

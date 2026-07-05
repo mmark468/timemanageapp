@@ -1,0 +1,99 @@
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28rpx;
+  padding: 32rpx;
+}
+
+.hero-title {
+  margin: 10rpx 0;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.countdown {
+  min-width: 132rpx;
+  padding: 22rpx 0;
+  border-radius: 26rpx;
+  background: #111827;
+  color: #ffffff;
+  text-align: center;
+}
+
+.count-number {
+  font-size: 48rpx;
+  font-weight: 900;
+}
+
+.small {
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.stats {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.stat {
+  flex: 1;
+  padding: 24rpx 18rpx;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 38rpx;
+  font-weight: 900;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+  text-align: left;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 20rpx;
+  border: 4rpx solid #111827;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.check.done {
+  background: #111827;
+}
+
+.task-body {
+  flex: 1;
+}
+
+.task-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.class-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+}
+
+.color-dot {
+  width: 28rpx;
+  height: 72rpx;
+  margin-right: 20rpx;
+  border-radius: 999rpx;
+}

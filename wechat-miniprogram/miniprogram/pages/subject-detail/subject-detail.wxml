@@ -1,0 +1,48 @@
+<view class="page" wx:if="{{subject}}">
+  <view class="eyebrow">{{subject.board}} · {{subject.code}}</view>
+  <view class="title">{{subject.name}}</view>
+
+  <view class="overview card">
+    <view class="overview-top">
+      <view>
+        <view class="muted small">考试倒计时</view>
+        <view class="overview-title">{{subject.examDaysLeft}} 天</view>
+      </view>
+      <view class="pill dark">{{subject.progress}}%</view>
+    </view>
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{subject.progress}}%;"></view>
+    </view>
+    <view class="muted small">{{subject.examTitle}} · {{subject.examDate}}</view>
+  </view>
+
+  <view class="section-title">
+    <text>单元进度</text>
+    <text class="muted">{{subject.units.length}} 个</text>
+  </view>
+
+  <block wx:for="{{subject.units}}" wx:key="id">
+    <view class="unit card">
+      <view class="unit-head">
+        <view class="unit-title">{{item.title}}</view>
+        <view class="pill">{{item.status}}</view>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{item.progress}}%;"></view>
+      </view>
+      <view class="muted small">学习 {{item.learningProgress}}% · 刷题 {{item.practiceProgress}}%</view>
+    </view>
+  </block>
+
+  <view class="section-title">
+    <text>错题</text>
+    <text class="muted">{{mistakes.length}} 条</text>
+  </view>
+  <block wx:for="{{mistakes}}" wx:key="id">
+    <view class="mistake card">
+      <view class="unit-title">{{item.title}}</view>
+      <view class="muted small">{{item.reason}} · {{item.status}}</view>
+    </view>
+  </block>
+  <view wx:if="{{showMistakeEmpty}}" class="empty">这个科目暂时没有错题。</view>
+</view>

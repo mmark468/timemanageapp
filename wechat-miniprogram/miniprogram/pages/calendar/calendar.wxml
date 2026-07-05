@@ -1,0 +1,28 @@
+<view class="page">
+  <view class="eyebrow">学习日历</view>
+  <view class="title">{{monthTitle}}</view>
+
+  <view class="month-card card">
+    <view class="muted small">今天</view>
+    <view class="today-text">{{today}}</view>
+    <view class="muted small">这里先用列表展示考试和任务，后续可以扩展成完整月视图。</view>
+  </view>
+
+  <view class="section-title">
+    <text>全部事项</text>
+    <text class="muted">{{events.length}} 条</text>
+  </view>
+
+  <block wx:for="{{events}}" wx:key="id">
+    <view class="event card">
+      <view class="date-box">
+        <view class="date-main">{{item.dateLabel}}</view>
+        <view class="muted small">{{item.type}}</view>
+      </view>
+      <view class="event-body">
+        <view class="event-title">{{item.title}}</view>
+        <view class="muted small">{{item.timeLabel}} · {{item.statusLabel}}</view>
+      </view>
+    </view>
+  </block>
+</view>

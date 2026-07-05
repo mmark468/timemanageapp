@@ -1,0 +1,31 @@
+<view class="page">
+  <view class="eyebrow">学校课表</view>
+  <view class="title">本周课程</view>
+
+  <scroll-view class="tabs" scroll-x>
+    <block wx:for="{{dayTabs}}" wx:key="label">
+      <button class="tab {{item.activeClass}}" bindtap="selectDay" data-day="{{item.label}}">{{item.label}}</button>
+    </block>
+  </scroll-view>
+
+  <view class="section-title">
+    <text>{{selectedDay}}</text>
+    <text class="muted">{{classes.length}} 节</text>
+  </view>
+
+  <block wx:for="{{classes}}" wx:key="id">
+    <view class="course card">
+      <view class="time">
+        <view class="time-main">{{item.startTime}}</view>
+        <view class="muted small">{{item.endTime}}</view>
+      </view>
+      <view class="course-body">
+        <view class="course-title">{{item.title}}</view>
+        <view class="muted small">{{item.room}}</view>
+      </view>
+      <view class="course-color" style="background: {{item.color}};"></view>
+    </view>
+  </block>
+
+  <view wx:if="{{showEmpty}}" class="empty">这一天没有课程。</view>
+</view>
