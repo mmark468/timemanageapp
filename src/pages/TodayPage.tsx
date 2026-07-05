@@ -84,7 +84,7 @@ export function TodayPage({
   };
 
   return (
-    <main className="today-page px-5 pb-32 pt-7 md:grid md:grid-cols-1 md:items-start md:gap-5 md:px-6 md:pb-8 md:pt-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-5 lg:overflow-hidden lg:px-7 xl:grid-cols-[minmax(0,0.98fr)_minmax(420px,0.82fr)]">
+    <main className="today-page px-5 pb-32 pt-7 md:grid md:grid-cols-1 md:items-start md:gap-5 md:px-6 md:pb-8 md:pt-6 lg:min-h-full lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)] lg:grid-rows-[auto_auto] lg:content-start lg:gap-5 lg:overflow-visible lg:px-7 xl:grid-cols-[minmax(0,0.98fr)_minmax(420px,0.82fr)]">
       <header className="mb-4 flex items-start justify-between gap-4 md:mb-0 lg:col-span-2">
         <div className="min-w-0">
           <p className="text-sm font-black text-muted">时间规划</p>
@@ -112,7 +112,7 @@ export function TodayPage({
         <QuickStat icon={<CalendarDays size={15} />} label="专注" value={minutesToText(focusMinutes)} />
       </section>
 
-      <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-4 lg:overflow-y-auto lg:pr-1">
+      <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:flex lg:flex-col lg:gap-4">
       <section className="mb-4 grid grid-cols-[1fr_auto] items-center gap-3 rounded-[26px] border border-white/80 bg-white p-4 shadow-soft md:mb-0 md:min-h-[112px] lg:order-2">
         <div>
           <p className="text-sm font-black text-ink">A-Level 搜题</p>
@@ -253,7 +253,7 @@ export function TodayPage({
 
       </div>
 
-      <section className="mt-5 rounded-[28px] bg-white p-4 shadow-soft md:mt-0 lg:col-start-2 lg:row-start-2 lg:mt-0 lg:h-full lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:p-5">
+      <section className="mt-5 rounded-[28px] bg-white p-4 shadow-soft md:mt-0 lg:col-start-2 lg:row-start-2 lg:mt-0 lg:flex lg:min-h-[calc(100dvh-156px)] lg:flex-col lg:self-stretch lg:overflow-visible lg:p-5">
         <HomePomodoro
           target={focusTarget}
           focusMinutes={focusMinutes}
@@ -353,7 +353,7 @@ function HomePomodoro({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col lg:flex-1">
       <div className="mb-3 flex items-center justify-between gap-3 lg:mb-4">
         <div>
           <p className="text-sm font-black text-ink lg:text-base">首页番茄钟</p>
