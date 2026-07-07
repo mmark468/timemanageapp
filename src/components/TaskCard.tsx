@@ -11,16 +11,16 @@ interface TaskCardProps {
 }
 
 const priorityStyle: Record<Priority, string> = {
-  高: "bg-peach text-[#8A3434]",
-  中: "bg-lemon text-[#7A5715]",
-  低: "bg-mint text-[#276044]",
+  高: "bg-[#FECACA] text-[#991B1B]",
+  中: "bg-[#FDE68A] text-[#78350F]",
+  低: "bg-[#BBF7D0] text-[#065F46]",
 };
 
 export function TaskCard({ task, subject, compact = false, onToggle, onDelete }: TaskCardProps) {
   return (
     <article
-      className={`rounded-[26px] border border-white/80 bg-white/80 p-4 shadow-soft transition ${
-        task.completed ? "opacity-70" : ""
+      className={`rounded-[26px] border p-4 shadow-soft transition ${
+        task.completed ? "border-[#8EB483]/45 bg-[#E8F0E6]/85 opacity-90" : "border-white/80 bg-white"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -30,7 +30,7 @@ export function TaskCard({ task, subject, compact = false, onToggle, onDelete }:
             aria-label={task.completed ? "标记未完成" : "标记完成"}
             onClick={() => onToggle(task.id)}
             className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
-              task.completed ? "bg-mint text-ink" : "bg-cream text-muted"
+              task.completed ? "bg-[#2D5A4B] text-white" : "bg-[#E2E8F0] text-[#475569]"
             }`}
           >
             {task.completed ? <Check size={18} /> : <Circle size={16} />}
@@ -66,12 +66,12 @@ export function TaskCard({ task, subject, compact = false, onToggle, onDelete }:
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span className="inline-flex items-center gap-1 rounded-full bg-cream px-3 py-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#E2E8F0] px-3 py-1.5 text-[#475569]">
               <Flag size={13} />
               截止：{daysLeftText(task.dueDate)}
             </span>
             {task.startTime ? (
-              <span className="rounded-full bg-cream px-3 py-1.5">
+              <span className="rounded-full bg-[#E2E8F0] px-3 py-1.5 text-[#475569]">
                 {task.startTime}
                 {task.endTime ? `-${task.endTime}` : ""}
               </span>

@@ -1,4 +1,4 @@
-import { ChevronRight, Files, FolderOpen, Inbox, NotebookTabs, Plus, Search } from "lucide-react";
+import { ChevronRight, Files, FolderOpen, Inbox, Plus, Search } from "lucide-react";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { SubjectIcon } from "../components/SubjectIcon";
@@ -11,10 +11,9 @@ interface SubjectsPageProps {
   sessions: PomodoroSession[];
   onOpenSubject: (subjectId: string) => void;
   onAddSubject: (name: string) => void;
-  onOpenMistakes: () => void;
 }
 
-export function SubjectsPage({ subjects, onOpenSubject, onAddSubject, onOpenMistakes }: SubjectsPageProps) {
+export function SubjectsPage({ subjects, onOpenSubject, onAddSubject }: SubjectsPageProps) {
   const [subjectName, setSubjectName] = useState("");
   const [localLibrary] = useStoredState<LocalLibraryStorage>("finished.localFiles", {});
   const libraryStats = subjects.reduce(
@@ -55,14 +54,6 @@ export function SubjectsPage({ subjects, onOpenSubject, onAddSubject, onOpenMist
             <Plus size={18} />
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onOpenMistakes}
-          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-cream text-sm font-black text-ink"
-        >
-          <NotebookTabs size={16} />
-          打开错题本
-        </button>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <LibraryStat icon={<Files size={15} />} label="文件" value={`${libraryStats.total}`} />
           <LibraryStat icon={<Search size={15} />} label="真题" value={`${libraryStats.papers}`} />

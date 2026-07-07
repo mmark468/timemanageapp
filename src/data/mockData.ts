@@ -2,7 +2,6 @@ import type {
   ChecklistItem,
   HolidayPeriod,
   DailyTimelineItem,
-  Mistake,
   PomodoroSession,
   PomodoroTarget,
   Subject,
@@ -722,35 +721,5 @@ export const mockPomodoroSessions: PomodoroSession[] = [
 export const defaultPomodoroTarget: PomodoroTarget = {
   taskTitle: "自定义学习任务",
 };
-
-export const mockMistakes: Mistake[] = [
-  {
-    id: "mistake-econ-demand",
-    subjectId: "econ",
-    unitId: "econ-u2",
-    title: "经济 · 价格体系",
-    reason: "需求曲线移动方向判断错误",
-    status: "需要复习",
-    lastReviewed: "2天前",
-  },
-  {
-    id: "mistake-math-c",
-    subjectId: "math",
-    unitId: "math-u2",
-    title: "数学 · Integration",
-    reason: "忘记积分常数",
-    status: "已复习一次",
-    lastReviewed: "昨天",
-  },
-  {
-    id: "mistake-psych-memory",
-    subjectId: "psych",
-    unitId: "psych-u1",
-    title: "心理学 · Memory",
-    reason: "关键词混淆",
-    status: "需要复习",
-    lastReviewed: "5天前",
-  },
-];
 
 export const dailyTimeline: DailyTimelineItem[] = [];

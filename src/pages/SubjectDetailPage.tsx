@@ -1,4 +1,4 @@
-import { FileText, FolderOpen, Inbox, NotebookTabs, Plus, Search, Settings2 } from "lucide-react";
+import { FileText, FolderOpen, Inbox, Plus, Search, Settings2 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { SubjectIcon, studyIconOptions } from "../components/SubjectIcon";
@@ -19,7 +19,6 @@ interface SubjectDetailPageProps {
   studyMode: SubjectStudyMode;
   onBack: () => void;
   onOpenUnit: (unitId: string) => void;
-  onOpenMistakes: () => void;
   onStartReview: () => void;
   onStudyModeChange: (mode: SubjectStudyMode) => void;
   onUpdateOverallProgress: (progress: number) => void;
@@ -61,7 +60,6 @@ export function SubjectDetailPage({
   subject,
   onBack,
   onOpenUnit,
-  onOpenMistakes,
   onAddUnit,
   onChangeIcon,
 }: SubjectDetailPageProps) {
@@ -133,14 +131,6 @@ export function SubjectDetailPage({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onOpenMistakes}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-cream text-ink"
-            aria-label="错题文件"
-          >
-            <NotebookTabs size={18} />
-          </button>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

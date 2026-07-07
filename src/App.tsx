@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { BookOpenText, CalendarDays, ClipboardList, Home, ScanSearch, School, Settings, TriangleAlert } from "lucide-react";
+import { BookOpenText, CalendarDays, ClipboardList, Home, ScanSearch, School, Settings } from "lucide-react";
 import { AppLayout, type DesktopNavItem } from "./components/AppLayout";
 import {
   defaultPomodoroTarget,
@@ -13,7 +13,6 @@ import { AddTaskPage } from "./pages/AddTaskPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { EditTimeBlockPage } from "./pages/EditTimeBlockPage";
 import { FocusPage } from "./pages/FocusPage";
-import { MistakesPage } from "./pages/MistakesPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { QuestionSearchPage } from "./pages/QuestionSearchPage";
 import { SetupTimetablePage } from "./pages/SetupTimetablePage";
@@ -31,7 +30,6 @@ import type {
   DailyTimelineItem,
   MainTab,
   HolidayPeriod,
-  Mistake,
   PomodoroSession,
   PomodoroTarget,
   StudyIconKey,
@@ -63,7 +61,6 @@ type Route =
   | { name: "subjectDetail"; subjectId: string }
   | { name: "unitDetail"; subjectId: string; unitId: string }
   | { name: "tasks" }
-  | { name: "mistakes" }
   | { name: "focus" }
   | { name: "editTimeBlock"; sourceKind: EditableTimeBlockKind; sourceId: string; date?: string }
   | { name: "addTask"; defaultType?: TaskType };
@@ -255,7 +252,7 @@ function getActiveTab(route: Route): MainTab {
   if (route.name === "calendar") return "calendar";
   if (route.name === "timetable") return "timetable";
   if (route.name === "questionSearch") return "questionSearch";
-  if (["subjects", "subjectDetail", "unitDetail", "mistakes"].includes(route.name)) return "subjects";
+  if (["subjects", "subjectDetail", "unitDetail"].includes(route.name)) return "subjects";
   return "today";
 }
 
@@ -705,16 +702,6 @@ export default function App() {
       taskTitle: task.title,
     });
     showToast("已添加到番茄钟");
-    navigate({ name: "focus" });
-  };
-
-  const focusMistake = (mistake: Mistake) => {
-    setFocusTarget({
-      subjectId: mistake.subjectId,
-      unitId: mistake.unitId,
-      taskTitle: "错题复盘",
-    });
-    showToast("已加入番茄钟");
     navigate({ name: "focus" });
   };
 
@@ -1206,12 +1193,7 @@ export default function App() {
     }
 
     if (route.name === "questionSearch") {
-      return (
-        <QuestionSearchPage
-          subjects={subjects}
-          mistakes={[]}
-        />
-      );
+      return <QuestionSearchPage subjects={subjects} />;
     }
 
     if (route.name === "timeline") {
@@ -1240,7 +1222,6 @@ export default function App() {
           sessions={visibleSessions}
           onOpenSubject={(subjectId) => navigate({ name: "subjectDetail", subjectId })}
           onAddSubject={addCustomSubject}
-          onOpenMistakes={() => navigate({ name: "mistakes" })}
         />
       );
     }
@@ -1253,7 +1234,6 @@ export default function App() {
           sessions={visibleSessions}
           onBack={goBack}
           onOpenUnit={(unitId) => navigate({ name: "unitDetail", subjectId: subject.id, unitId })}
-          onOpenMistakes={() => navigate({ name: "mistakes" })}
           onStartReview={() => startSubjectReview(subject)}
           studyMode={subjectStudyModes[subject.id] ?? "units"}
           onStudyModeChange={(mode) => setSubjectStudyMode(subject.id, mode)}
@@ -1295,17 +1275,6 @@ export default function App() {
           onEditTask={(taskId) => navigate({ name: "editTimeBlock", sourceKind: "task", sourceId: taskId })}
           onDeleteTask={deleteTask}
           onFocusTask={focusTask}
-        />
-      );
-    }
-
-    if (route.name === "mistakes") {
-      return (
-        <MistakesPage
-          mistakes={[]}
-          subjects={subjects}
-          onBack={goBack}
-          onFocusMistake={focusMistake}
         />
       );
     }
@@ -1391,14 +1360,6 @@ export default function App() {
       icon: ScanSearch,
       active: route.name === "questionSearch",
       onClick: () => goToTab("questionSearch"),
-    },
-    {
-      id: "mistakes",
-      label: "错题",
-      description: "复盘列表",
-      icon: TriangleAlert,
-      active: route.name === "mistakes",
-      onClick: () => navigate({ name: "mistakes" }),
     },
     {
       id: "settings",

@@ -123,7 +123,7 @@ export interface Task {
 }
 
 export interface TaskSaveOptions {
-  addTarget: "学习日历" | "今日时间轴" | "学校课表" | "科目进度" | "错题本" | "番茄钟任务";
+  addTarget: "学习日历" | "今日时间轴" | "学校课表" | "科目进度" | "番茄钟任务";
   reminder: "无" | "提前10分钟" | "提前1小时" | "提前1天" | "自定义";
   repeat: "不重复" | "每天" | "每周" | "A/B周" | "自定义循环";
 }
@@ -161,16 +161,6 @@ export interface PomodoroTarget {
   subjectId?: string;
   unitId?: string;
   taskTitle: string;
-}
-
-export interface Mistake {
-  id: string;
-  subjectId: string;
-  unitId: string;
-  title: string;
-  reason: string;
-  status: "需要复习" | "已复习一次" | "已掌握";
-  lastReviewed: string;
 }
 
 export interface CalendarEvent {

@@ -10,6 +10,23 @@
 - 变更 list 下方再补充细节，包括涉及页面 / 模块、关键文件、验证结果、未完成事项，以及相对上一次存档的变化。
 - README 只放长期有价值的项目说明；临时测试、分享、部署发布和平台后台配置流程不要写进 README。
 
+## 2026-07-07 · question-organization-cleanup
+
+- 当前存档：独立错题大模块移除，错题记录并入搜题页的题目整理。
+- 变更摘要：
+  - 删除桌面侧边栏中的“错题”入口和独立错题页面路由。
+  - 删除资料库首页、科目详情里的错题本入口。
+  - 搜题页“试卷归纳”改为“题目整理”，承接试卷状态和错题归纳。
+  - 加深试卷学习状态、记录分数开关、学习任务卡片和优先级标签的颜色。
+- 关键文件：
+  - `src/App.tsx`
+  - `src/pages/QuestionSearchPage.tsx`
+  - `src/pages/SubjectsPage.tsx`
+  - `src/pages/SubjectDetailPage.tsx`
+  - `src/components/TaskCard.tsx`
+  - `src/types.ts`
+- 验证结果：`tsc --noEmit` 通过，`vite build` 通过。
+
 ## 2026-07-04 · responsive-webapp-archive
 
 - 当前存档：`main` 保存七月四号响应式 Web App 源码与阶段说明，网站构建已发布到 `gh-pages`。
@@ -26,7 +43,6 @@
   - `src/pages/CalendarPage.tsx`
   - `src/pages/QuestionSearchPage.tsx`
   - `src/pages/SubjectsPage.tsx`
-  - `src/pages/MistakesPage.tsx`
   - `src/styles.css`
   - `docs/archives/2026-07-04-responsive-webapp.md`
 - 验证结果：

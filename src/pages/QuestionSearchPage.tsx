@@ -35,11 +35,10 @@ import type {
   QuestionOcrOutcome,
   QuestionSearchResult,
 } from "../features/questionSearch/types";
-import type { Mistake, Subject } from "../types";
+import type { Subject } from "../types";
 
 interface QuestionSearchPageProps {
   subjects: Subject[];
-  mistakes: Mistake[];
 }
 
 interface UploadedImageState {
@@ -102,32 +101,32 @@ const paperStudyStatusMeta: Record<
     shortLabel: "未做",
     description: "还没有开始",
     className: "bg-cream text-muted",
-    buttonClassName: "bg-cream text-ink",
-    bookmarkClassName: "bg-white",
+    buttonClassName: "bg-white text-ink ring-1 ring-slate-200",
+    bookmarkClassName: "bg-white ring-1 ring-slate-200",
   },
   attempted: {
     label: "做过一遍",
     shortLabel: "一遍",
     description: "已经完整写过",
-    className: "bg-[#EAF3FF] text-[#1D4ED8]",
-    buttonClassName: "bg-[#EAF3FF] text-[#1D4ED8]",
-    bookmarkClassName: "bg-[#8FB8E8]",
+    className: "bg-[#DBEAFE] text-[#1E3A8A]",
+    buttonClassName: "bg-[#DBEAFE] text-[#1E3A8A]",
+    bookmarkClassName: "bg-[#3B82F6]",
   },
   studying: {
     label: "正在学习",
     shortLabel: "学习中",
     description: "已写完，解析还没完全理解",
-    className: "bg-[#FFF2CC] text-[#92400E]",
-    buttonClassName: "bg-[#FFF2CC] text-[#92400E]",
-    bookmarkClassName: "bg-[#E7B85A]",
+    className: "bg-[#FDE68A] text-[#78350F]",
+    buttonClassName: "bg-[#FDE68A] text-[#78350F]",
+    bookmarkClassName: "bg-[#D97706]",
   },
   mastered: {
     label: "完整理解",
     shortLabel: "已理解",
     description: "解析看完并能复盘",
-    className: "bg-[#E8F0E6] text-[#166534]",
-    buttonClassName: "bg-[#E8F0E6] text-[#166534]",
-    bookmarkClassName: "bg-[#8EB483]",
+    className: "bg-[#D1FAE5] text-[#065F46]",
+    buttonClassName: "bg-[#D1FAE5] text-[#065F46]",
+    bookmarkClassName: "bg-[#059669]",
   },
 };
 
@@ -828,8 +827,8 @@ function PaperReviewPanel({
     <section className={`${className} min-h-0 flex-col rounded-[32px] bg-white p-4 shadow-soft`}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-muted">试卷归纳</p>
-          <h2 className="mt-1 text-lg font-black text-ink">做题状态整理</h2>
+          <p className="text-xs font-black text-muted">题目整理</p>
+          <h2 className="mt-1 text-lg font-black text-ink">试卷状态与错题归纳</h2>
         </div>
         <span className="grid h-10 w-10 place-items-center rounded-full bg-cream text-ink">
           <Layers size={18} />
@@ -977,10 +976,10 @@ function PaperMistakeRecorder({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm font-black text-ink">
             <Hash size={14} />
-            错题记录
+            错题归纳
           </p>
           <p className="mt-1 text-[11px] font-bold leading-4 text-muted">
-            输入错题题号，系统会自动整理成标签。
+            输入错题题号，系统会自动归到这份试卷。
           </p>
         </div>
         {record ? (
@@ -1021,14 +1020,14 @@ function PaperMistakeRecorder({
         type="button"
         onClick={() => setScoreEnabled((current) => !current)}
         className={`mt-3 flex h-10 w-full items-center justify-between rounded-[18px] px-3 text-left text-xs font-black transition ${
-          scoreEnabled ? "bg-ink text-white" : "bg-cream text-ink"
+          scoreEnabled ? "bg-ink text-white shadow-pill" : "bg-[#E5E7EB] text-[#374151] ring-1 ring-[#CBD5E1]"
         }`}
         aria-pressed={scoreEnabled}
       >
         <span>记录分数</span>
-        <span className={`h-5 w-9 rounded-full p-0.5 transition ${scoreEnabled ? "bg-white/25" : "bg-white"}`}>
+        <span className={`h-5 w-9 rounded-full p-0.5 transition ${scoreEnabled ? "bg-[#FBBF24]" : "bg-[#9CA3AF]"}`}>
           <span
-            className={`block h-4 w-4 rounded-full transition ${scoreEnabled ? "translate-x-4 bg-white" : "translate-x-0 bg-ink"}`}
+            className={`block h-4 w-4 rounded-full transition ${scoreEnabled ? "translate-x-4 bg-white" : "translate-x-0 bg-white"}`}
           />
         </span>
       </button>
@@ -1071,7 +1070,7 @@ function PaperMistakeRecorder({
           disabled={!canSave}
           className="h-10 rounded-full bg-ink px-4 text-sm font-black text-white shadow-pill transition disabled:bg-muted/30 disabled:text-white disabled:shadow-none"
         >
-          保存错题
+          保存记录
         </button>
         {record ? (
           <button
