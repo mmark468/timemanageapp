@@ -1,5 +1,6 @@
 node_modules
 dist
+share
 .local-node
 .local-npm
 .idea
