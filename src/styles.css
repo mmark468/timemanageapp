@@ -669,4 +669,46 @@ body.theme-dark {
     margin-bottom: 1rem;
   }
 }
+
+.library-modal {
+  color: var(--ink);
+  background: var(--surface-strong) !important;
+  border: 1px solid var(--line);
+}
+
+.library-resource-row {
+  border: 1px solid var(--line);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.library-resource-row:hover {
+  transform: translateY(-1px);
+}
+
+.library-page button:focus-visible,
+.library-detail-page button:focus-visible,
+.resource-preview-page button:focus-visible,
+.library-modal button:focus-visible,
+.library-page input:focus-visible,
+.library-detail-page input:focus-visible,
+.library-modal input:focus-visible,
+.library-modal select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-2) 34%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .library-page header h1,
+  .library-detail-page header h1,
+  .resource-preview-page header h1 {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .resource-preview-page iframe {
+    height: 64dvh;
+  }
+}
 /* preview-custom-end */

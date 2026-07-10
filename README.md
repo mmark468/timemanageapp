@@ -2,7 +2,7 @@
 
 时间规划是面向中国国际学生，尤其是 A-Level / IGCSE / IB / AP 备考学生的移动端优先学习时间管理 App。它不是普通日历，而是把学校课表、学习日历、考试倒计时、科目与单元进度、专注记录和 A-Level 搜题合在一起的学生日常规划工具。
 
-当前仓库包含 Web MVP、小程序端适配稿、CAIE 试卷索引后端和本地内容索引工具。MVP 阶段以 mock data + localStorage 为主，便于快速验证产品结构和交互逻辑。
+当前仓库包含 Web MVP、小程序端适配稿、CAIE 试卷索引后端和本地内容索引工具。学习规划数据使用 localStorage，本地资料库使用 IndexedDB 保存元数据和文件 Blob。
 
 ## 产品定位
 
@@ -41,6 +41,7 @@
 - Tailwind CSS
 - lucide-react 图标
 - localStorage 保存个人档案、任务、课表、今日时间轴、放假时间、单元进度、搜题记录和番茄钟记录
+- IndexedDB 保存本地资料库科目、文件元数据和文件 Blob
 - Python + SQLite 用于 CAIE past-paper 元数据、PDF 索引和 OCR 搜索后端实验
 
 ## 已完成功能
@@ -52,7 +53,7 @@
 - 学习日历：桌面端左侧选择月份 / 日期，右侧管理当天时间线；大考、临时考试、中国假期、特别事项和 DDL 都有清晰标注。
 - 学习任务：添加、完成、编辑、删除，并可同步到日历、时间轴、课表或番茄钟目标。
 - 课表：学校周 / 自定义计划、A/B 周、课程总量列表、批量编辑和单节微调。
-- 资料库 / 科目：按科目整理本地文件，显示文件、真题、答案、待归档数量；错题记录并入题目整理。
+- 本地资料库：按科目管理“卷子 / 学习资料”，支持批量导入、搜索、排序、收藏、移动、重命名、删除、分享、导出和预览。
 - 番茄钟：自定义专注时长、休息规则、当前目标和完成历史。
 - A-Level 搜题：按科目、年份、月份和卷号选择 9709 试卷；卷号旁标明 Pure Math / Mechanics / Statistics。
 - 试卷状态管理：默认为没做过，可标记做过一遍、正在学习、完整理解，左侧用克制书签色条提示状态。
@@ -67,11 +68,13 @@ src/
   App.tsx                         # 应用状态、页面切换和核心交互
   components/                     # 通用 UI 组件
   data/mockData.ts                # 首次打开时使用的示例数据
+  features/localLibrary/          # IndexedDB、本地文件服务与资料库组件
   features/questionSearch/        # A-Level 搜题引擎与题库逻辑
   pages/                          # 今天、日历、科目、课表、搜题等页面
   types.ts                        # 产品数据结构
   utils/                          # localStorage 与日期工具
 docs/archives/                    # 阶段性存档与设计说明
+docs/internal/                    # Codex / 专业人员技术资料
 backend/caie_papers/              # CAIE past-paper 索引、搜索和 OCR 后端实验
 content/cie-math/                 # CAIE Mathematics 9709 内容索引目录
 wechat-miniprogram/               # 原生微信小程序适配稿
@@ -79,6 +82,12 @@ wechat-miniprogram/               # 原生微信小程序适配稿
 
 ## 模块文档
 
+- [项目文档导航](docs/README.md)
+- [当前功能](docs/features/README.md)
+- [项目结构](docs/architecture/README.md)
+- [部署说明](docs/deployment/README.md)
+- [后续路线](docs/roadmap/README.md)
+- [Codex / 专业人员资料](docs/internal/README.md)
 - [A-Level 搜题模块](src/features/questionSearch/README.md)
 - [CAIE past-paper 后端](backend/caie_papers/README.md)
 - [CIE Math 内容目录](content/cie-math/README.md)

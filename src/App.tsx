@@ -15,6 +15,7 @@ import { EditTimeBlockPage } from "./pages/EditTimeBlockPage";
 import { FocusPage } from "./pages/FocusPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { QuestionSearchPage } from "./pages/QuestionSearchPage";
+import { ResourcePreviewPage } from "./pages/ResourcePreviewPage";
 import { SetupTimetablePage } from "./pages/SetupTimetablePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SubjectDetailPage } from "./pages/SubjectDetailPage";
@@ -25,6 +26,7 @@ import { TimetablePage } from "./pages/TimetablePage";
 import { TodayPage } from "./pages/TodayPage";
 import { UnitDetailPage } from "./pages/UnitDetailPage";
 import { WelcomePage } from "./pages/WelcomePage";
+import { useLocalLibrary } from "./features/localLibrary/useLocalLibrary";
 import type {
   CalendarEvent,
   DailyTimelineItem,
@@ -59,6 +61,7 @@ type Route =
   | { name: "settings" }
   | { name: "subjects" }
   | { name: "subjectDetail"; subjectId: string }
+  | { name: "resourcePreview"; resourceId: string }
   | { name: "unitDetail"; subjectId: string; unitId: string }
   | { name: "tasks" }
   | { name: "focus" }
@@ -252,11 +255,12 @@ function getActiveTab(route: Route): MainTab {
   if (route.name === "calendar") return "calendar";
   if (route.name === "timetable") return "timetable";
   if (route.name === "questionSearch") return "questionSearch";
-  if (["subjects", "subjectDetail", "unitDetail"].includes(route.name)) return "subjects";
+  if (["subjects", "subjectDetail", "resourcePreview", "unitDetail"].includes(route.name)) return "subjects";
   return "today";
 }
 
 export default function App() {
+  const localLibrary = useLocalLibrary();
   const storedProfile = readStorage<StudentProfile | null>("finished.profile", null);
   const hasOnboarded = readStorage("finished.onboarded", false);
   const initialRoute: Route = storedProfile ? (hasOnboarded ? { name: "today" } : { name: "setupTimetable" }) : { name: "welcome" };
@@ -1218,33 +1222,26 @@ export default function App() {
     if (route.name === "subjects") {
       return (
         <SubjectsPage
-          subjects={subjects}
-          sessions={visibleSessions}
+          library={localLibrary}
           onOpenSubject={(subjectId) => navigate({ name: "subjectDetail", subjectId })}
-          onAddSubject={addCustomSubject}
+          onOpenResource={(resourceId) => navigate({ name: "resourcePreview", resourceId })}
         />
       );
     }
 
     if (route.name === "subjectDetail") {
-      const subject = subjects.find((item) => item.id === route.subjectId) ?? subjects[0]!;
       return (
         <SubjectDetailPage
-          subject={subject}
-          sessions={visibleSessions}
+          subjectId={route.subjectId}
+          library={localLibrary}
           onBack={goBack}
-          onOpenUnit={(unitId) => navigate({ name: "unitDetail", subjectId: subject.id, unitId })}
-          onStartReview={() => startSubjectReview(subject)}
-          studyMode={subjectStudyModes[subject.id] ?? "units"}
-          onStudyModeChange={(mode) => setSubjectStudyMode(subject.id, mode)}
-          onUpdateOverallProgress={(progress) => updateSubjectOverallProgress(subject, progress)}
-          onSetUnitFocus={(unit, mode) => setUnitFocusMode(subject, unit, mode)}
-          onUpdateProgress={updateUnitProgressPart}
-          onAddUnit={(title) => addCustomUnit(subject.id, title)}
-          onDeleteUnit={deleteUnit}
-          onChangeIcon={(iconKey) => updateSubjectIcon(subject.id, iconKey)}
+          onOpenResource={(resourceId) => navigate({ name: "resourcePreview", resourceId })}
         />
       );
+    }
+
+    if (route.name === "resourcePreview") {
+      return <ResourcePreviewPage resourceId={route.resourceId} library={localLibrary} onBack={goBack} />;
     }
 
     if (route.name === "unitDetail") {
@@ -1342,7 +1339,7 @@ export default function App() {
       label: "资料库",
       description: "本地文件查找",
       icon: BookOpenText,
-      active: ["subjects", "subjectDetail", "unitDetail"].includes(route.name),
+      active: ["subjects", "subjectDetail", "resourcePreview", "unitDetail"].includes(route.name),
       onClick: () => goToTab("subjects"),
     },
     {

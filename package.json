@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "node scripts/build-preview.mjs",
-    "build:vite": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test-local-library.mjs",
+    "build": "tsc --noEmit && node scripts/build-preview.mjs",
+    "build:vite": "tsc --noEmit && vite build",
+    "test:library": "node scripts/test-local-library.mjs",
     "export:html": "npm run build && node scripts/export-single-html.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "cie:math:fetch-official": "node scripts/cie-math/fetchOfficial9709.mjs",
